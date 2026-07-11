@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useTerminalStore, TerminalInfo } from "../stores/terminalStore";
 
@@ -9,7 +9,6 @@ export interface CreateTerminalParams {
 
 export function useTerminal() {
   const { addTerminal, removeTerminal, updateTerminalStatus, updateTerminalName, getNextAvailableSlot } = useTerminalStore();
-  const eventListenersRef = useRef<Map<string, () => void>>(new Map());
 
   const createTerminal = useCallback(
     async (params?: CreateTerminalParams): Promise<TerminalInfo | null> => {
@@ -39,9 +38,6 @@ export function useTerminal() {
 
         addTerminal(terminal);
 
-        // Listen for output events to update status
-        setupOutputListener(result.terminal_id);
-
         return terminal;
       } catch (error) {
         console.error("Failed to create terminal:", error);
@@ -49,39 +45,6 @@ export function useTerminal() {
       }
     },
     [addTerminal, getNextAvailableSlot]
-  );
-
-  const setupOutputListener = useCallback(
-    (terminalId: string) => {
-      // Listen for terminal output via Tauri events
-      const unlistenPromise = import("@tauri-apps/api/event").then(
-        ({ listen }) => {
-          return listen<{ id: string }>(`terminal-output-${terminalId}`, () => {
-            const store = useTerminalStore.getState();
-            store.updateTerminalStatus(terminalId, "running");
-
-            // Set up idle detection
-            const timer = setTimeout(() => {
-              const current = useTerminalStore.getState();
-              const term = current.terminals.find((t) => t.id === terminalId);
-              if (term && term.status === "running") {
-                const elapsed = Date.now() - term.lastOutputTime;
-                if (elapsed > 5000) {
-                  current.updateTerminalStatus(terminalId, "idle");
-                }
-              }
-            }, 5000);
-
-            return () => clearTimeout(timer);
-          });
-        }
-      );
-
-      unlistenPromise.then((unlisten) => {
-        eventListenersRef.current.set(terminalId, unlisten);
-      });
-    },
-    []
   );
 
   const writeToTerminal = useCallback(async (id: string, data: string) => {
@@ -109,13 +72,6 @@ export function useTerminal() {
     async (id: string) => {
       try {
         await invoke("close_terminal", { id });
-
-        // Clean up event listener
-        const unlisten = eventListenersRef.current.get(id);
-        if (unlisten) {
-          unlisten();
-          eventListenersRef.current.delete(id);
-        }
 
         removeTerminal(id);
       } catch (error) {
@@ -162,7 +118,6 @@ export function useTerminal() {
         };
 
         addTerminal(newTerminal);
-        setupOutputListener(result.terminal_id);
       } catch (error) {
         console.error("Failed to restart terminal:", error);
       }

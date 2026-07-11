@@ -4,6 +4,7 @@ import { Minus, Maximize2, X, GripVertical } from "lucide-react";
 import { Terminal as XtermTerminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
+import { listen } from "@tauri-apps/api/event";
 import { useTerminalStore, TerminalInfo } from "../stores/terminalStore";
 import { useTerminal } from "../hooks/useTerminal";
 
@@ -90,7 +91,45 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
 
     resizeObserver.observe(terminalRef.current);
 
+    // Cleanup state for async listeners
+    let unlistenOutput: (() => void) | undefined;
+    let unlistenExit: (() => void) | undefined;
+    let cancelled = false;
+
+    // Listen for PTY output events and write to xterm
+    listen<{ id: string; data: string }>(
+      `terminal-output-${terminal.id}`,
+      (event) => {
+        if (cancelled || !xtermRef.current) return;
+        const data = event.payload.data;
+        if (!data) return;
+
+        // Update status to running on output
+        useTerminalStore.getState().updateTerminalStatus(terminal.id, "running");
+
+        // Decode base64 -> raw bytes and write to xterm
+        const binaryString = atob(data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        xtermRef.current.write(bytes);
+      }
+    ).then((fn) => { unlistenOutput = fn; });
+
+    // Listen for PTY exit events
+    listen<{ id: string }>(
+      `terminal-exited-${terminal.id}`,
+      () => {
+        if (cancelled) return;
+        useTerminalStore.getState().updateTerminalStatus(terminal.id, "exited");
+      }
+    ).then((fn) => { unlistenExit = fn; });
+
     return () => {
+      cancelled = true;
+      unlistenOutput?.();
+      unlistenExit?.();
       resizeObserver.disconnect();
       term.dispose();
     };

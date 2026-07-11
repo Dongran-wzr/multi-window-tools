@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useTerminalStore } from "../stores/terminalStore";
 import { useTerminal } from "../hooks/useTerminal";
+
+// Shared ref to track the currently open context menu — ensures only one at a time
+let closeCurrentContextMenu: (() => void) | null = null;
 
 interface TabItemProps {
   terminalId: string;
@@ -33,6 +37,8 @@ const TabItem: React.FC<TabItemProps> = ({
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
+    // Close any previously open context menu first
+    closeCurrentContextMenu?.();
     setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
@@ -41,10 +47,21 @@ const TabItem: React.FC<TabItemProps> = ({
   };
 
   useEffect(() => {
-    const handleClick = () => setContextMenu(null);
+    const handleClick = () => {
+      setContextMenu(null);
+      closeCurrentContextMenu = null;
+    };
     if (contextMenu) {
+      // Register this menu as the current one so other tabs can close it
+      closeCurrentContextMenu = () => {
+        setContextMenu(null);
+        closeCurrentContextMenu = null;
+      };
       document.addEventListener("click", handleClick);
-      return () => document.removeEventListener("click", handleClick);
+      return () => {
+        document.removeEventListener("click", handleClick);
+        closeCurrentContextMenu = null;
+      };
     }
   }, [contextMenu]);
 
@@ -149,23 +166,23 @@ const TabItem: React.FC<TabItemProps> = ({
       </motion.div>
       </div>
 
-      {/* Context Menu */}
-      {contextMenu && (
-        <div
-          className="context-menu glass card"
-          style={{
-            position: "fixed",
-            left: contextMenu.x,
-            bottom: `calc(100vh - ${contextMenu.y}px)`,
-            zIndex: 200,
-            minWidth: "160px",
-            padding: "6px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "2px",
-            transform: "translateY(-100%)",
-          }}
-        >
+      {/* Context Menu — rendered via Portal to escape framer-motion clipping */}
+      {contextMenu &&
+        createPortal(
+          <div
+            className="context-menu glass card"
+            style={{
+              position: "fixed",
+              left: contextMenu.x,
+              bottom: `calc(100vh - ${contextMenu.y}px)`,
+              zIndex: 9999,
+              minWidth: "160px",
+              padding: "6px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            }}
+          >
           {[
             { label: "Rename", action: handleRename },
             { label: "Restart Terminal", action: handleRestart },
@@ -199,8 +216,9 @@ const TabItem: React.FC<TabItemProps> = ({
               {item.label}
             </button>
           ))}
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </>
   );
 };

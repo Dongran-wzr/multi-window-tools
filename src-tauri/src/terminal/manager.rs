@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+use std::io::Read;
 use std::thread;
 
+use base64::{Engine as _, engine::general_purpose};
 use tauri::{AppHandle, Emitter};
 
 use super::pty::PtyInstance;
@@ -29,32 +31,55 @@ impl TerminalManager {
             return Err("Maximum number of terminals reached (9)".to_string());
         }
 
-        let instance = PtyInstance::new(id.clone(), shell, cwd)?;
+        let mut instance = PtyInstance::new(id.clone(), shell, cwd)?;
         let info = super::pty::TerminalInfo {
             id: id.clone(),
             pid: instance.pid,
             name: format!("Terminal {}", self.terminals.len() + 1),
         };
 
+        // Take the reader before storing the instance (avoids borrow conflict)
+        let mut reader = instance
+            .take_reader()
+            .ok_or("No PTY reader available")?;
+
         self.terminals.insert(id.clone(), instance);
 
-        // Spawn a thread to read output and emit events
+        // Spawn a dedicated thread to read PTY output and emit events
         let tid = id.clone();
         let handle = app_handle.clone();
 
         thread::spawn(move || {
-            // Re-create the pty reader for output streaming
-            // This is a simplified approach - in production we'd use async I/O
+            let mut buf = [0u8; 4096];
             loop {
-                // Check if the terminal still exists in manager
-                // For output reading we'd need a separate reader handle
-                // This is handled differently in the actual implementation
-                thread::sleep(std::time::Duration::from_millis(100));
-
-                // Emit an output event to signal activity
-                let _ = handle.emit(&format!("terminal-output-{}", tid), serde_json::json!({
-                    "id": tid,
-                }));
+                match reader.read(&mut buf) {
+                    Ok(0) => {
+                        // EOF: the shell process has exited
+                        let _ = handle.emit(
+                            &format!("terminal-exited-{}", tid),
+                            serde_json::json!({ "id": tid }),
+                        );
+                        break;
+                    }
+                    Ok(n) => {
+                        let encoded = general_purpose::STANDARD.encode(&buf[..n]);
+                        let _ = handle.emit(
+                            &format!("terminal-output-{}", tid),
+                            serde_json::json!({
+                                "id": tid,
+                                "data": encoded,
+                            }),
+                        );
+                    }
+                    Err(_) => {
+                        // Read error: PTY closed, break the loop
+                        let _ = handle.emit(
+                            &format!("terminal-exited-{}", tid),
+                            serde_json::json!({ "id": tid }),
+                        );
+                        break;
+                    }
+                }
             }
         });
 

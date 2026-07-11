@@ -195,18 +195,18 @@ html, body, #root {
   flex-shrink: 0;
 }
 
-.status-dot.green {
+.status-dot.running {
   background: var(--status-green);
   box-shadow: 0 0 6px var(--status-green);
   animation: breathe 2s ease-in-out infinite;
 }
 
-.status-dot.yellow {
+.status-dot.idle {
   background: var(--status-yellow);
   box-shadow: 0 0 6px var(--status-yellow);
 }
 
-.status-dot.red {
+.status-dot.exited {
   background: var(--status-red);
   box-shadow: 0 0 6px var(--status-red);
 }
