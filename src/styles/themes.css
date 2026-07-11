@@ -1,0 +1,222 @@
+/* ===== CSS Variables - Dark Theme (Default) ===== */
+:root {
+  /* Background */
+  --bg-primary: #1a1d23;
+  --bg-secondary: #242832;
+  --bg-tertiary: #2a2e3a;
+  --bg-hover: #303540;
+
+  /* Text */
+  --text-primary: #e4e6eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  /* Accent */
+  --accent: #6c8cff;
+  --accent-hover: #8aa4ff;
+  --accent-dim: rgba(108, 140, 255, 0.15);
+
+  /* Status */
+  --status-green: #4ade80;
+  --status-yellow: #facc15;
+  --status-red: #f87171;
+
+  /* Glass */
+  --glass-bg: rgba(26, 29, 35, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* Card */
+  --card-bg: #242832;
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --card-radius: 12px;
+
+  /* Tab */
+  --tab-height: 48px;
+  --tab-active-indicator: #6c8cff;
+
+  /* Title bar */
+  --titlebar-height: 44px;
+
+  /* Grid */
+  --grid-gap: 8px;
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(108, 140, 255, 0.3);
+  --scrollbar-track: transparent;
+
+  /* Transition */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms;
+  --transition-normal: 280ms;
+  --transition-slow: 400ms;
+}
+
+/* ===== Light Theme ===== */
+[data-theme="light"] {
+  --bg-primary: #f5f6f8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f0f1f3;
+  --bg-hover: #e8eaed;
+
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  --text-muted: #8b949e;
+
+  --accent: #6c8cff;
+  --accent-hover: #5a7ae6;
+  --accent-dim: rgba(108, 140, 255, 0.1);
+
+  --glass-bg: rgba(245, 246, 248, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.06);
+  --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  --scrollbar-thumb: rgba(108, 140, 255, 0.2);
+}
+
+/* ===== Global Styles ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background var(--transition-normal) var(--ease-smooth),
+              color var(--transition-normal) var(--ease-smooth);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ===== Glass Morphism Mixin (applied via class) ===== */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+/* ===== Card Style ===== */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+/* ===== Animations ===== */
+@keyframes breathe {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ===== Utility ===== */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.green {
+  background: var(--status-green);
+  box-shadow: 0 0 6px var(--status-green);
+  animation: breathe 2s ease-in-out infinite;
+}
+
+.status-dot.yellow {
+  background: var(--status-yellow);
+  box-shadow: 0 0 6px var(--status-yellow);
+}
+
+.status-dot.red {
+  background: var(--status-red);
+  box-shadow: 0 0 6px var(--status-red);
+}
+
+/* xterm overrides for theme integration */
+.xterm {
+  padding: 8px;
+  height: 100%;
+}
+
+.xterm-viewport {
+  border-radius: 0 0 var(--card-radius) var(--card-radius);
+}

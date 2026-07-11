@@ -1,0 +1,69 @@
+/* ===== App Layout ===== */
+.app-container {
+  background: var(--bg-primary);
+  position: relative;
+}
+
+/* ===== Titlebar button hover states ===== */
+.titlebar-btn:hover {
+  color: var(--text-primary) !important;
+}
+
+/* ===== Terminal Window Styles ===== */
+.terminal-window {
+  transition: box-shadow var(--transition-normal) var(--ease-smooth);
+}
+
+.terminal-window:focus-within {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04),
+              0 0 0 1px var(--accent),
+              0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Terminal titlebar grab cursor */
+.terminal-titlebar:active {
+  cursor: grabbing !important;
+}
+
+/* ===== Tab Bar ===== */
+.tab-bar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* ===== Context Menu ===== */
+.context-menu {
+  animation: scaleIn 0.15s var(--ease-spring) forwards;
+}
+
+/* ===== Add Button Glow ===== */
+.add-button {
+  transition: transform var(--transition-fast) var(--ease-spring),
+              box-shadow var(--transition-normal) var(--ease-smooth),
+              opacity var(--transition-normal) var(--ease-smooth),
+              background var(--transition-normal) var(--ease-smooth);
+}
+
+/* ===== Focus styles ===== */
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ===== Grid empty state ===== */
+.terminal-grid-empty {
+  opacity: 0.4;
+  transition: opacity var(--transition-normal);
+}
+
+/* ===== Smooth transitions for theme change ===== */
+* {
+  transition: background-color var(--transition-normal) var(--ease-smooth),
+              border-color var(--transition-normal) var(--ease-smooth);
+}
+
+/* Prevent transition on load */
+.no-transitions * {
+  transition: none !important;
+}
