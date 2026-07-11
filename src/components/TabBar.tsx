@@ -1,5 +1,4 @@
-import React, { useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useRef } from "react";
 import { useTerminalStore } from "../stores/terminalStore";
 import TabItem from "./TabItem";
 import { useI18n } from "../i18n/translations";
@@ -9,7 +8,6 @@ const TabBar: React.FC = () => {
   const activeTerminalId = useTerminalStore((s) => s.activeTerminalId);
   const setActiveTerminal = useTerminalStore((s) => s.setActiveTerminal);
   const swapTerminals = useTerminalStore((s) => s.swapTerminals);
-  const setTerminalMaximized = useTerminalStore((s) => s.setTerminalMaximized);
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragSlotRef = useRef<number | null>(null);
 
@@ -18,7 +16,6 @@ const TabBar: React.FC = () => {
     if (!terminal) return;
 
     if (terminal.gridSlot === -1) {
-      // Hidden → restore to first available slot
       const occupiedSlots = new Set(
         terminals.filter((t) => t.gridSlot !== -1).map((t) => t.gridSlot)
       );
@@ -29,7 +26,6 @@ const TabBar: React.FC = () => {
         }
       }
     } else {
-      // Visible → hide (minimize)
       useTerminalStore.getState().moveTerminalToSlot(id, -1);
     }
 
@@ -44,7 +40,7 @@ const TabBar: React.FC = () => {
     };
 
   const handleDragOver =
-    (targetSlot: number) => (e: React.DragEvent) => {
+    (_targetSlot: number) => (e: React.DragEvent) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
     };
@@ -61,25 +57,30 @@ const TabBar: React.FC = () => {
 
   const { t } = useI18n();
 
-  // Sort terminals by grid slot for tab order
-  const sortedTerminals = [...terminals].sort((a, b) => a.gridSlot - b.gridSlot);
+  const sortedTerminals = [...terminals].sort(
+    (a, b) => a.gridSlot - b.gridSlot
+  );
 
   return (
     <div
-      className="tab-bar glass"
+      className="tab-bar"
+      ref={scrollRef}
       style={{
         height: "var(--tab-height)",
         display: "flex",
         alignItems: "flex-end",
         flexShrink: 0,
-        borderTop: "1px solid var(--glass-border)",
-        padding: "0 8px",
-        gap: "2px",
+        padding: "0 10px",
+        gap: "3px",
         overflowX: "auto",
         overflowY: "hidden",
         zIndex: 80,
+        background: "var(--glass-bg)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderTop: "1px solid var(--glass-border)",
+        boxShadow: "inset 0 1px 0 rgba(108, 140, 255, 0.06)",
       }}
-      ref={scrollRef}
     >
       {sortedTerminals.map((terminal) => (
         <TabItem
@@ -88,6 +89,7 @@ const TabBar: React.FC = () => {
           name={terminal.name}
           status={terminal.status}
           isActive={terminal.id === activeTerminalId}
+          isVisible={terminal.gridSlot !== -1}
           onSelect={() => handleSelect(terminal.id)}
           onTabDragStart={handleDragStart(terminal.gridSlot)}
           onTabDragOver={handleDragOver(terminal.gridSlot)}

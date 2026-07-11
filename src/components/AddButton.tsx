@@ -5,9 +5,11 @@ import { useTerminalStore } from "../stores/terminalStore";
 import { useTerminal } from "../hooks/useTerminal";
 
 const AddButton: React.FC = () => {
-  const terminals = useTerminalStore((s) => s.terminals);
+  const isFull = useTerminalStore((s) => {
+    const visible = s.terminals.filter((t) => t.gridSlot !== -1);
+    return visible.length >= 9;
+  });
   const { createTerminal } = useTerminal();
-  const isFull = terminals.length >= 9;
 
   const handleClick = async () => {
     if (isFull) return;

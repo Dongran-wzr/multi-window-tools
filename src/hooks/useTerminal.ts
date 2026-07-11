@@ -24,9 +24,13 @@ export function useTerminal() {
           }
         );
 
+        // Use nextSlot as a monotonically increasing counter so names never collide
+        const store = useTerminalStore.getState();
+        const terminalNum = store.nextSlot + 1;
+
         const terminal: TerminalInfo = {
           id: result.terminal_id,
-          name: `Terminal ${slot + 1}`,
+          name: `Terminal ${terminalNum}`,
           pid: result.pid,
           gridSlot: slot,
           status: "running",

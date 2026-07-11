@@ -52,6 +52,35 @@ interface TerminalStore {
 }
 
 const MAX_TERMINALS = 9;
+const DEFAULT_NAME_PATTERN = /^Terminal \d+$/;
+
+/** Renumber terminals whose names still use the default "Terminal {N}" pattern */
+function renumberDefaultNames(terminals: TerminalInfo[]): TerminalInfo[] {
+  return terminals.map((t) => {
+    if (t.gridSlot === -1) return t;
+    if (DEFAULT_NAME_PATTERN.test(t.name)) {
+      return { ...t, name: `Terminal ${t.gridSlot + 1}` };
+    }
+    return t;
+  });
+}
+
+/** Compact visible terminal slots to 0,1,2... without renaming */
+function compactSlots(terminals: TerminalInfo[]): TerminalInfo[] {
+  const visible = terminals
+    .filter((t) => t.gridSlot !== -1)
+    .sort((a, b) => a.gridSlot - b.gridSlot);
+  return terminals.map((t) => {
+    if (t.gridSlot === -1) return t;
+    const newSlot = visible.findIndex((vt) => vt.id === t.id);
+    return { ...t, gridSlot: newSlot };
+  });
+}
+
+/** Compact slots AND renumber default-named terminals */
+function compactAndRenumber(terminals: TerminalInfo[]): TerminalInfo[] {
+  return renumberDefaultNames(compactSlots(terminals));
+}
 
 export const useTerminalStore = create<TerminalStore>((set, get) => ({
   terminals: [],
@@ -73,17 +102,9 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
 
   removeTerminal: (id) =>
     set((state) => {
-      let filtered = state.terminals.filter((t) => t.id !== id);
-
-      // Compact remaining visible terminals to fill gaps
-      const visible = filtered
-        .filter((t) => t.gridSlot !== -1)
-        .sort((a, b) => a.gridSlot - b.gridSlot);
-      filtered = filtered.map((t) => {
-        if (t.gridSlot === -1) return t;
-        const newSlot = visible.findIndex((vt) => vt.id === t.id);
-        return { ...t, gridSlot: newSlot };
-      });
+      const filtered = compactAndRenumber(
+        state.terminals.filter((t) => t.id !== id)
+      );
 
       const newActive =
         state.activeTerminalId === id
@@ -139,16 +160,9 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
           : t
       );
 
-      // Compact remaining visible terminals when minimizing
+      // Compact slots only when minimizing (names stay)
       if (slot === -1) {
-        const visible = terminals
-          .filter((t) => t.gridSlot !== -1)
-          .sort((a, b) => a.gridSlot - b.gridSlot);
-        terminals = terminals.map((t) => {
-          if (t.gridSlot === -1) return t;
-          const newSlot = visible.findIndex((vt) => vt.id === t.id);
-          return { ...t, gridSlot: newSlot };
-        });
+        terminals = compactSlots(terminals);
       }
 
       return { terminals };
@@ -185,8 +199,9 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
 
   getNextAvailableSlot: () => {
     const { terminals } = get();
-    if (terminals.length >= MAX_TERMINALS) return -1;
-    const occupiedSlots = new Set(terminals.map((t) => t.gridSlot));
+    const visible = terminals.filter((t) => t.gridSlot !== -1);
+    if (visible.length >= MAX_TERMINALS) return -1;
+    const occupiedSlots = new Set(visible.map((t) => t.gridSlot));
     for (let i = 0; i < MAX_TERMINALS; i++) {
       if (!occupiedSlots.has(i)) return i;
     }
