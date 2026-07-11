@@ -12,12 +12,14 @@ interface TerminalWindowProps {
   terminal: TerminalInfo;
   isMaximized: boolean;
   onMaximizeToggle: () => void;
+  onTitleBarDragStart?: (slot: number, e: React.PointerEvent) => void;
 }
 
 const TerminalWindow: React.FC<TerminalWindowProps> = ({
   terminal,
   isMaximized,
   onMaximizeToggle,
+  onTitleBarDragStart,
 }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XtermTerminal | null>(null);
@@ -205,6 +207,12 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
       {/* Title bar */}
       <div
         className="terminal-titlebar"
+        onPointerDown={(e) => {
+          if (isMaximized) return;
+          const target = e.target as HTMLElement;
+          if (target.closest("button")) return;
+          onTitleBarDragStart?.(terminal.gridSlot, e);
+        }}
         onDoubleClick={handleDoubleClickTitle}
         style={{
           display: "flex",
@@ -214,7 +222,8 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
           padding: "0 10px",
           flexShrink: 0,
           borderBottom: "1px solid var(--card-border)",
-          cursor: "grab",
+          cursor: isMaximized ? "default" : "grab",
+          touchAction: "none",
         }}
       >
         {/* Left: status + name */}
