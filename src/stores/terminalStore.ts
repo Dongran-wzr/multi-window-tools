@@ -73,7 +73,18 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
 
   removeTerminal: (id) =>
     set((state) => {
-      const filtered = state.terminals.filter((t) => t.id !== id);
+      let filtered = state.terminals.filter((t) => t.id !== id);
+
+      // Compact remaining visible terminals to fill gaps
+      const visible = filtered
+        .filter((t) => t.gridSlot !== -1)
+        .sort((a, b) => a.gridSlot - b.gridSlot);
+      filtered = filtered.map((t) => {
+        if (t.gridSlot === -1) return t;
+        const newSlot = visible.findIndex((vt) => vt.id === t.id);
+        return { ...t, gridSlot: newSlot };
+      });
+
       const newActive =
         state.activeTerminalId === id
           ? filtered.length > 0
@@ -120,11 +131,28 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
     })),
 
   moveTerminalToSlot: (id, slot) =>
-    set((state) => ({
-      terminals: state.terminals.map((t) =>
-        t.id === id ? { ...t, gridSlot: slot } : t
-      ),
-    })),
+    set((state) => {
+      // Move terminal to target slot; unmaximize if minimizing
+      let terminals = state.terminals.map((t) =>
+        t.id === id
+          ? { ...t, gridSlot: slot, isMaximized: slot === -1 ? false : t.isMaximized }
+          : t
+      );
+
+      // Compact remaining visible terminals when minimizing
+      if (slot === -1) {
+        const visible = terminals
+          .filter((t) => t.gridSlot !== -1)
+          .sort((a, b) => a.gridSlot - b.gridSlot);
+        terminals = terminals.map((t) => {
+          if (t.gridSlot === -1) return t;
+          const newSlot = visible.findIndex((vt) => vt.id === t.id);
+          return { ...t, gridSlot: newSlot };
+        });
+      }
+
+      return { terminals };
+    }),
 
   swapTerminals: (slotA, slotB) =>
     set((state) => {
