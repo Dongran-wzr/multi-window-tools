@@ -1,18 +1,28 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Monitor, Moon, Sun } from "lucide-react";
-import { useTerminalStore, ThemeMode } from "../stores/terminalStore";
+import { useTerminalStore, ThemeMode, FontLanguage } from "../stores/terminalStore";
+import { useI18n } from "../i18n/translations";
 
 const SettingsModal: React.FC = () => {
+  const { t } = useI18n();
   const settingsOpen = useTerminalStore((s) => s.settingsOpen);
   const setSettingsOpen = useTerminalStore((s) => s.setSettingsOpen);
   const theme = useTerminalStore((s) => s.theme);
   const setTheme = useTerminalStore((s) => s.setTheme);
 
+  const fontLanguage = useTerminalStore((s) => s.fontLanguage);
+  const setFontLanguage = useTerminalStore((s) => s.setFontLanguage);
+
+  const fontOptions: { value: FontLanguage; label: string }[] = [
+    { value: "zh", label: t("settings.language.zh") },
+    { value: "en", label: t("settings.language.en") },
+  ];
+
   const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-    { value: "dark", label: "Dark", icon: <Moon size={18} /> },
-    { value: "light", label: "Light", icon: <Sun size={18} /> },
-    { value: "system", label: "System", icon: <Monitor size={18} /> },
+    { value: "dark", label: t("settings.theme.dark"), icon: <Moon size={18} /> },
+    { value: "light", label: t("settings.theme.light"), icon: <Sun size={18} /> },
+    { value: "system", label: t("settings.theme.system"), icon: <Monitor size={18} /> },
   ];
 
   const handleThemeChange = (mode: ThemeMode) => {
@@ -49,16 +59,8 @@ const SettingsModal: React.FC = () => {
             }}
           />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{
-              duration: 0.28,
-              ease: [0.34, 1.56, 0.64, 1],
-            }}
-            className="glass card"
+          {/* Modal — outer div for centering, inner motion.div for animation */}
+          <div
             style={{
               position: "fixed",
               top: "50%",
@@ -67,6 +69,18 @@ const SettingsModal: React.FC = () => {
               zIndex: 160,
               width: "400px",
               maxWidth: "90vw",
+            }}
+          >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{
+              duration: 0.28,
+              ease: [0.34, 1.56, 0.64, 1],
+            }}
+            className="glass card"
+            style={{
               padding: "24px",
               display: "flex",
               flexDirection: "column",
@@ -88,7 +102,7 @@ const SettingsModal: React.FC = () => {
                   color: "var(--text-primary)",
                 }}
               >
-                Settings
+                {t("settings.title")}
               </h2>
               <motion.button
                 whileHover={{ scale: 1.1 }}
@@ -118,7 +132,7 @@ const SettingsModal: React.FC = () => {
                   marginBottom: "12px",
                 }}
               >
-                Theme
+                {t("settings.theme")}
               </h3>
               <div
                 style={{
@@ -165,6 +179,62 @@ const SettingsModal: React.FC = () => {
               </div>
             </div>
 
+            {/* Font Language Section */}
+            <div>
+              <h3
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "var(--text-secondary)",
+                  marginBottom: "12px",
+                }}
+              >
+                {t("settings.language")}
+              </h3>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "8px",
+                }}
+              >
+                {fontOptions.map((option) => (
+                  <motion.button
+                    key={option.value}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setFontLanguage(option.value)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      padding: "14px 8px",
+                      borderRadius: "10px",
+                      border:
+                        fontLanguage === option.value
+                          ? "2px solid var(--accent)"
+                          : "2px solid var(--card-border)",
+                      background:
+                        fontLanguage === option.value
+                          ? "var(--accent-dim)"
+                          : "var(--bg-tertiary)",
+                      color:
+                        fontLanguage === option.value
+                          ? "var(--accent)"
+                          : "var(--text-secondary)",
+                      cursor: "pointer",
+                      transition: "all var(--transition-fast)",
+                    }}
+                  >
+                    <span style={{ fontSize: "13px", fontWeight: 500 }}>
+                      {option.label}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
             {/* Info */}
             <div
               style={{
@@ -177,15 +247,15 @@ const SettingsModal: React.FC = () => {
               }}
             >
               <p>
-                <strong>Shortcuts:</strong> Ctrl+Shift+T New Terminal ·
-                Ctrl+Shift+W Close · Ctrl+Tab Next · Ctrl+1~9 Jump
+                <strong>{t("settings.shortcuts.title")}:</strong>{" "}
+                {t("settings.shortcuts.content")}
               </p>
               <p style={{ marginTop: "4px" }}>
-                Double-click a terminal title to maximize/restore. Drag tabs to
-                rearrange.
+                {t("settings.hint")}
               </p>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

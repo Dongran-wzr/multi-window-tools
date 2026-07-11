@@ -11,6 +11,7 @@ import "./App.css";
 
 const App: React.FC = () => {
   const theme = useTerminalStore((s) => s.theme);
+  const fontLanguage = useTerminalStore((s) => s.fontLanguage);
   const setResolvedTheme = useTerminalStore((s) => s.setResolvedTheme);
   const activeTerminalId = useTerminalStore((s) => s.activeTerminalId);
   const terminals = useTerminalStore((s) => s.terminals);
@@ -42,6 +43,11 @@ const App: React.FC = () => {
       return () => mediaQuery.removeEventListener("change", handler);
     }
   }, [theme, setResolvedTheme]);
+
+  // Apply font language to UI
+  useEffect(() => {
+    document.documentElement.setAttribute("data-font", fontLanguage);
+  }, [fontLanguage]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback(

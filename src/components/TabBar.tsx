@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTerminalStore } from "../stores/terminalStore";
 import TabItem from "./TabItem";
+import { useI18n } from "../i18n/translations";
 
 const TabBar: React.FC = () => {
   const terminals = useTerminalStore((s) => s.terminals);
@@ -14,22 +15,24 @@ const TabBar: React.FC = () => {
 
   const handleSelect = (id: string) => {
     const terminal = terminals.find((t) => t.id === id);
-    if (terminal?.gridSlot === -1) {
-      // If minimized, restore to first available slot
+    if (!terminal) return;
+
+    if (terminal.gridSlot === -1) {
+      // Hidden → restore to first available slot
       const occupiedSlots = new Set(
         terminals.filter((t) => t.gridSlot !== -1).map((t) => t.gridSlot)
       );
-      let slot = -1;
       for (let i = 0; i < 9; i++) {
         if (!occupiedSlots.has(i)) {
-          slot = i;
+          useTerminalStore.getState().moveTerminalToSlot(id, i);
           break;
         }
       }
-      if (slot !== -1) {
-        useTerminalStore.getState().moveTerminalToSlot(id, slot);
-      }
+    } else {
+      // Visible → hide (minimize)
+      useTerminalStore.getState().moveTerminalToSlot(id, -1);
     }
+
     setActiveTerminal(id);
   };
 
@@ -55,6 +58,8 @@ const TabBar: React.FC = () => {
       }
       dragSlotRef.current = null;
     };
+
+  const { t } = useI18n();
 
   // Sort terminals by grid slot for tab order
   const sortedTerminals = [...terminals].sort((a, b) => a.gridSlot - b.gridSlot);
@@ -102,7 +107,7 @@ const TabBar: React.FC = () => {
             fontSize: "12px",
           }}
         >
-          No terminals open. Click + to create one.
+          {t("tabbar.empty")}
         </div>
       )}
     </div>

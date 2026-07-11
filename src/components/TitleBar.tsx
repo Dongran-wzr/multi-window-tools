@@ -2,8 +2,10 @@ import React, { useCallback } from "react";
 import { Minus, Square, X, Settings } from "lucide-react";
 import { useTerminalStore } from "../stores/terminalStore";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useI18n } from "../i18n/translations";
 
 const TitleBar: React.FC = () => {
+  const { t } = useI18n();
   const setSettingsOpen = useTerminalStore((s) => s.setSettingsOpen);
   const appWindow = getCurrentWindow();
 
@@ -84,7 +86,7 @@ const TitleBar: React.FC = () => {
             pointerEvents: "none",
           }}
         >
-          MultiWindow Terminal
+          {t("app.title")}
         </span>
 
         {/* Settings button — inside drag area but explicitly excluded via closest('button') */}

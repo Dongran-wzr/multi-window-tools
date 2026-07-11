@@ -91,15 +91,24 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial,
-    sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: background var(--transition-normal) var(--ease-smooth),
               color var(--transition-normal) var(--ease-smooth);
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* ---- UI Font: Chinese ---- */
+[data-font="zh"] {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans SC", "WenQuanYi Micro Hei", sans-serif;
+}
+
+/* ---- UI Font: English ---- */
+[data-font="en"] {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 /* Custom scrollbar */

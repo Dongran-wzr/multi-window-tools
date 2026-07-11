@@ -13,6 +13,7 @@ export interface TerminalInfo {
 }
 
 export type ThemeMode = "dark" | "light" | "system";
+export type FontLanguage = "zh" | "en";
 
 interface TerminalStore {
   // Terminal instances
@@ -30,6 +31,7 @@ interface TerminalStore {
 
   // Settings
   settingsOpen: boolean;
+  fontLanguage: FontLanguage;
 
   // Actions
   addTerminal: (terminal: TerminalInfo) => void;
@@ -43,6 +45,7 @@ interface TerminalStore {
   setTheme: (theme: ThemeMode) => void;
   setResolvedTheme: (theme: "dark" | "light") => void;
   setSettingsOpen: (open: boolean) => void;
+  setFontLanguage: (lang: FontLanguage) => void;
   getTerminalBySlot: (slot: number) => TerminalInfo | undefined;
   getNextAvailableSlot: () => number;
   getActiveTerminal: () => TerminalInfo | undefined;
@@ -59,6 +62,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   gridCols: 3,
   gridRows: 3,
   settingsOpen: false,
+  fontLanguage: "zh",
 
   addTerminal: (terminal) =>
     set((state) => ({
@@ -144,6 +148,8 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
     }),
 
   setSettingsOpen: (open) => set({ settingsOpen: open }),
+
+  setFontLanguage: (lang) => set({ fontLanguage: lang }),
 
   getTerminalBySlot: (slot) => {
     return get().terminals.find((t) => t.gridSlot === slot);

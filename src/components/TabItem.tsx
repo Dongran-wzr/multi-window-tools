@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useTerminalStore } from "../stores/terminalStore";
 import { useTerminal } from "../hooks/useTerminal";
+import { useI18n } from "../i18n/translations";
 
 // Shared ref to track the currently open context menu — ensures only one at a time
 let closeCurrentContextMenu: (() => void) | null = null;
@@ -32,6 +33,7 @@ const TabItem: React.FC<TabItemProps> = ({
     x: number;
     y: number;
   } | null>(null);
+  const { t } = useI18n();
   const { closeTerminal, renameTerminal, restartTerminal } = useTerminal();
   const updateTerminalName = useTerminalStore((s) => s.updateTerminalName);
 
@@ -184,11 +186,11 @@ const TabItem: React.FC<TabItemProps> = ({
             }}
           >
           {[
-            { label: "Rename", action: handleRename },
-            { label: "Restart Terminal", action: handleRestart },
-            { label: "Split Horizontally", action: handleHorizontalSplit },
-            { label: "Split Vertically", action: handleVerticalSplit },
-            { label: "Close", action: handleClose, danger: true },
+            { label: t("tab.rename"), action: handleRename },
+            { label: t("tab.restart"), action: handleRestart },
+            { label: t("tab.splitH"), action: handleHorizontalSplit },
+            { label: t("tab.splitV"), action: handleVerticalSplit },
+            { label: t("tab.close"), action: handleClose, danger: true },
           ].map((item) => (
             <button
               key={item.label}

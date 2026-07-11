@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTerminalStore } from "../stores/terminalStore";
 import { useGridLayout } from "../hooks/useGridLayout";
 import TerminalWindow from "./TerminalWindow";
+import { useI18n } from "../i18n/translations";
 
 const TerminalGrid: React.FC = () => {
   const terminals = useTerminalStore((s) => s.terminals);
   const setTerminalMaximized = useTerminalStore((s) => s.setTerminalMaximized);
+  const { t } = useI18n();
   const { cells, gridCols, gridRows, isMaximized, maximizedTerminalId } =
     useGridLayout();
 
@@ -104,10 +106,10 @@ const TerminalGrid: React.FC = () => {
             <line x1="12" y1="17" x2="12" y2="21" />
           </svg>
           <span style={{ fontSize: "14px", fontWeight: 500 }}>
-            No Terminals Open
+            {t("empty.noTerminals")}
           </span>
           <span style={{ fontSize: "12px" }}>
-            Click the + button or press Ctrl+Shift+T to create one
+            {t("empty.hint")}
           </span>
         </div>
       )}
