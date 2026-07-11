@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Minus, Square, X, Settings } from "lucide-react";
+import { Minus, Square, X, Settings, Info } from "lucide-react";
 import { useTerminalStore } from "../stores/terminalStore";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useI18n } from "../i18n/translations";
@@ -7,6 +7,7 @@ import { useI18n } from "../i18n/translations";
 const TitleBar: React.FC = () => {
   const { t } = useI18n();
   const setSettingsOpen = useTerminalStore((s) => s.setSettingsOpen);
+  const setAboutOpen = useTerminalStore((s) => s.setAboutOpen);
   const appWindow = getCurrentWindow();
 
   // Only the gray drag-handle area triggers window move
@@ -36,6 +37,10 @@ const TitleBar: React.FC = () => {
   const handleSettings = useCallback(() => {
     setSettingsOpen(true);
   }, [setSettingsOpen]);
+
+  const handleAbout = useCallback(() => {
+    setAboutOpen(true);
+  }, [setAboutOpen]);
 
   const btnBase: React.CSSProperties = {
     background: "transparent",
@@ -103,6 +108,22 @@ const TitleBar: React.FC = () => {
           }}
         >
           <Settings size={16} />
+        </button>
+
+        {/* About button */}
+        <button
+          style={{ ...btnBase, padding: "4px 6px" }}
+          onClick={handleAbout}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--bg-hover)";
+            e.currentTarget.style.color = "var(--text-primary)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "var(--text-secondary)";
+          }}
+        >
+          <Info size={16} />
         </button>
       </div>
 

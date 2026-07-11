@@ -7,6 +7,10 @@ const zh: Record<string, string> = {
 
   // TitleBar
   "titlebar.settings": "设置",
+  "titlebar.about": "关于",
+
+  // About modal
+  "about.title": "关于",
 
   // Settings modal
   "settings.title": "设置",
@@ -42,6 +46,10 @@ const en: Record<string, string> = {
 
   // TitleBar
   "titlebar.settings": "Settings",
+  "titlebar.about": "About",
+
+  // About modal
+  "about.title": "About",
 
   // Settings modal
   "settings.title": "Settings",

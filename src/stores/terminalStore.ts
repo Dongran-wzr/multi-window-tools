@@ -31,6 +31,7 @@ interface TerminalStore {
 
   // Settings
   settingsOpen: boolean;
+  aboutOpen: boolean;
   fontLanguage: FontLanguage;
 
   // Actions
@@ -45,6 +46,7 @@ interface TerminalStore {
   setTheme: (theme: ThemeMode) => void;
   setResolvedTheme: (theme: "dark" | "light") => void;
   setSettingsOpen: (open: boolean) => void;
+  setAboutOpen: (open: boolean) => void;
   setFontLanguage: (lang: FontLanguage) => void;
   getTerminalBySlot: (slot: number) => TerminalInfo | undefined;
   getNextAvailableSlot: () => number;
@@ -91,6 +93,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   gridCols: 3,
   gridRows: 3,
   settingsOpen: false,
+  aboutOpen: false,
   fontLanguage: "zh",
 
   addTerminal: (terminal) =>
@@ -190,6 +193,8 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
     }),
 
   setSettingsOpen: (open) => set({ settingsOpen: open }),
+
+  setAboutOpen: (open) => set({ aboutOpen: open }),
 
   setFontLanguage: (lang) => set({ fontLanguage: lang }),
 

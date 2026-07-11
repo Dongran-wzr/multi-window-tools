@@ -148,14 +148,14 @@ const TabItem: React.FC<TabItemProps> = ({
               "background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease",
           }}
         >
-          {/* Status dot with glow */}
+          {/* Status dot with glow — hidden terminals always show red */}
           <span
-            className={`status-dot ${status}`}
+            className={`status-dot ${isVisible ? status : 'exited'}`}
             style={{
               width: 8,
               height: 8,
               flexShrink: 0,
-              opacity: isVisible ? 1 : 0.5,
+              opacity: isVisible ? 1 : 0.7,
               transition: "opacity 0.2s ease",
             }}
           />

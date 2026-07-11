@@ -4,6 +4,7 @@ import TerminalGrid from "./components/TerminalGrid";
 import TabBar from "./components/TabBar";
 import AddButton from "./components/AddButton";
 import SettingsModal from "./components/SettingsModal";
+import AboutModal from "./components/AboutModal";
 import { useTerminalStore, ThemeMode } from "./stores/terminalStore";
 import { useTerminal } from "./hooks/useTerminal";
 import "./styles/themes.css";
@@ -122,6 +123,7 @@ const App: React.FC = () => {
       <TabBar />
       <AddButton />
       <SettingsModal />
+      <AboutModal />
     </div>
   );
 };
