@@ -7,7 +7,7 @@ on:
       - 'v*'
   pull_request:
     branches: [main, master]
-  workflow_dispatch:          # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   # ──────────────────────────────────────
@@ -16,20 +16,17 @@ jobs:
   build:
     name: ${{ matrix.name }}
     strategy:
-      fail-fast: false       # 一个平台失败不影响其他
+      fail-fast: false
       matrix:
         include:
           - name: Windows
             platform: windows-latest
-            target: x86_64-pc-windows-msvc
 
           - name: macOS (Apple Silicon)
             platform: macos-latest
-            target: aarch64-apple-darwin
 
           - name: Linux
             platform: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
 
     runs-on: ${{ matrix.platform }}
 
@@ -44,10 +41,8 @@ jobs:
 
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
 
-      - name: 安装 Linux 系统依赖（WebKitGTK 等）
+      - name: 安装 Linux 系统依赖
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
@@ -60,17 +55,39 @@ jobs:
             libjavascriptcoregtk-4.1-dev
 
       - name: 安装前端依赖
-        run: npm install
+        run: npm ci
 
-      - name: Tauri 构建
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 构建 Tauri 应用
+        run: npm run tauri build
+
+      - name: 上传构建产物 (Workflow Artifact)
+        uses: actions/upload-artifact@v4
         with:
-          # 仅在推送 tag 时创建 Release
-          tagName: ${{ github.ref_name }}
-          releaseName: 'v__VERSION__'
-          releaseBody: |
+          name: ${{ matrix.name }}
+          path: |
+            src-tauri/target/release/bundle/**/*
+          retention-days: 7
+
+  # ──────────────────────────────────────
+  # 仅在推送 tag 时创建 GitHub Release
+  # ──────────────────────────────────────
+  release:
+    name: 创建 Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: ${{ github.ref_name }}
+          body: |
             ## 📥 下载
 
             | 平台 | 安装包 |
@@ -83,6 +100,11 @@ jobs:
 
             ---
             💡 提交反馈请到 [Issues](https://github.com/${{ github.repository }}/issues)。
-          releaseDraft: true   # 先新建草稿，人工检查后再发布
-          prerelease: false
-          args: --target ${{ matrix.target }}
+          files: |
+            **/*.msi
+            **/*.exe
+            **/*.dmg
+            **/*.deb
+            **/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
