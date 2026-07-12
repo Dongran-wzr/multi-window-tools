@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Info } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { useTerminalStore } from "../stores/terminalStore";
 import { useI18n } from "../i18n/translations";
 
@@ -8,6 +9,21 @@ const AboutModal: React.FC = () => {
   const { t } = useI18n();
   const aboutOpen = useTerminalStore((s) => s.aboutOpen);
   const setAboutOpen = useTerminalStore((s) => s.setAboutOpen);
+  const [version, setVersion] = useState<string>("");
+  const [versionError, setVersionError] = useState(false);
+
+  useEffect(() => {
+    if (aboutOpen) {
+      invoke<string>("get_app_version")
+        .then((v) => {
+          setVersion(v);
+          setVersionError(false);
+        })
+        .catch(() => {
+          setVersionError(true);
+        });
+    }
+  }, [aboutOpen]);
 
   return (
     <AnimatePresence>
@@ -108,6 +124,17 @@ const AboutModal: React.FC = () => {
                   letterSpacing: "0.02em",
                 }}
               >
+                <p style={{ marginBottom: "8px" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+                    {t("about.version")}
+                  </span>
+                  {" "}
+                  <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                    {versionError
+                      ? "--"
+                      : version || "..."}
+                  </span>
+                </p>
                 <p>
                   <a
                     href="https://github.com/Dongran-wzr"
