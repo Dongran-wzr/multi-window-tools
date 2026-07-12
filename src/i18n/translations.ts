@@ -27,6 +27,18 @@ const zh: Record<string, string> = {
   "settings.hint":
     "双击终端标题栏可最大化/还原。拖拽标签页可重新排列。",
 
+  // Advanced settings
+  "settings.advanced": "高级选项",
+  "settings.advanced.background.title": "自定义背景",
+  "settings.advanced.background.image": "背景图片",
+  "settings.advanced.background.image.choose": "选择图片",
+  "settings.advanced.background.image.remove": "移除图片",
+  "settings.advanced.background.image.hint": "支持 PNG / JPG / GIF / WebP / SVG，图片会自动保存。",
+  "settings.advanced.background.code": "自定义背景代码",
+  "settings.advanced.background.code.hint":
+    "编写 CSS 代码来自定义背景样式，例如渐变、动画等。代码会自动保存并在每次打开应用时生效。",
+  "settings.advanced.background.enable": "启用自定义背景",
+
   // Tab context menu
   "tab.rename": "重命名",
   "tab.restart": "重启终端",
@@ -65,6 +77,18 @@ const en: Record<string, string> = {
     "Ctrl+Shift+T New Terminal · Ctrl+Shift+W Close · Ctrl+Tab Next · Ctrl+1~9 Jump",
   "settings.hint":
     "Double-click a terminal title to maximize/restore. Drag tabs to rearrange.",
+
+  // Advanced settings
+  "settings.advanced": "Advanced",
+  "settings.advanced.background.title": "Custom Background",
+  "settings.advanced.background.image": "Background Image",
+  "settings.advanced.background.image.choose": "Choose Image",
+  "settings.advanced.background.image.remove": "Remove Image",
+  "settings.advanced.background.image.hint": "Supports PNG / JPG / GIF / WebP / SVG. The image will be saved automatically.",
+  "settings.advanced.background.code": "Custom Background Code",
+  "settings.advanced.background.code.hint":
+    "Write CSS code to customize the background style, such as gradients, animations, etc. The code is saved automatically and applied each time the app opens.",
+  "settings.advanced.background.enable": "Enable Custom Background",
 
   // Tab context menu
   "tab.rename": "Rename",

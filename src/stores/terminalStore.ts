@@ -15,6 +15,11 @@ export interface TerminalInfo {
 export type ThemeMode = "dark" | "light" | "system";
 export type FontLanguage = "zh" | "en";
 
+export interface BackgroundImageData {
+  mime: string;
+  base64: string;
+}
+
 interface TerminalStore {
   // Terminal instances
   terminals: TerminalInfo[];
@@ -34,6 +39,11 @@ interface TerminalStore {
   aboutOpen: boolean;
   fontLanguage: FontLanguage;
 
+  // Advanced settings - background
+  backgroundImage: BackgroundImageData | null;
+  backgroundCode: string;
+  backgroundEnabled: boolean;
+
   // Actions
   addTerminal: (terminal: TerminalInfo) => void;
   removeTerminal: (id: string) => void;
@@ -48,6 +58,10 @@ interface TerminalStore {
   setSettingsOpen: (open: boolean) => void;
   setAboutOpen: (open: boolean) => void;
   setFontLanguage: (lang: FontLanguage) => void;
+  // Advanced settings actions
+  setBackgroundImage: (image: BackgroundImageData | null) => void;
+  setBackgroundCode: (code: string) => void;
+  setBackgroundEnabled: (enabled: boolean) => void;
   getTerminalBySlot: (slot: number) => TerminalInfo | undefined;
   getNextAvailableSlot: () => number;
   getActiveTerminal: () => TerminalInfo | undefined;
@@ -95,6 +109,9 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   settingsOpen: false,
   aboutOpen: false,
   fontLanguage: "zh",
+  backgroundImage: null,
+  backgroundCode: "",
+  backgroundEnabled: true,
 
   addTerminal: (terminal) =>
     set((state) => ({
@@ -205,6 +222,12 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   setAboutOpen: (open) => set({ aboutOpen: open }),
 
   setFontLanguage: (lang) => set({ fontLanguage: lang }),
+
+  setBackgroundImage: (image) => set({ backgroundImage: image }),
+
+  setBackgroundCode: (code) => set({ backgroundCode: code }),
+
+  setBackgroundEnabled: (enabled) => set({ backgroundEnabled: enabled }),
 
   getTerminalBySlot: (slot) => {
     return get().terminals.find((t) => t.gridSlot === slot);
