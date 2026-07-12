@@ -24,9 +24,20 @@ export function useTerminal() {
           }
         );
 
-        // Use nextSlot as a monotonically increasing counter so names never collide
-        const store = useTerminalStore.getState();
-        const terminalNum = store.nextSlot + 1;
+        // Find the smallest unused terminal number across ALL terminals
+        // (including minimized/hidden ones) to avoid name collisions.
+        const existingNumbers = new Set(
+          useTerminalStore.getState().terminals
+            .map((t) => {
+              const match = t.name.match(/^Terminal (\d+)$/);
+              return match ? parseInt(match[1], 10) : null;
+            })
+            .filter((n): n is number => n !== null)
+        );
+        let terminalNum = 1;
+        while (existingNumbers.has(terminalNum)) {
+          terminalNum++;
+        }
 
         const terminal: TerminalInfo = {
           id: result.terminal_id,

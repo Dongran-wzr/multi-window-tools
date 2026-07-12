@@ -7,6 +7,27 @@ use tauri::{AppHandle, Emitter};
 
 use super::pty::PtyInstance;
 
+/// Kill a process and its entire process tree on Windows.
+/// On other platforms, falls back to the normal kill.
+fn kill_process_tree(pid: u32) {
+    #[cfg(target_os = "windows")]
+    {
+        // Use taskkill /F /T to forcefully terminate the process and all its children.
+        // This ensures conhost.exe and any child processes are cleaned up.
+        let _ = std::process::Command::new("taskkill")
+            .args(["/F", "/T", "/PID", &pid.to_string()])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn();
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        // On Unix, we rely on the child's kill() which sends SIGKILL to the
+        // process group via the PTY. No separate tree-kill mechanism needed.
+        let _ = pid; // suppress unused warning
+    }
+}
+
 pub struct TerminalManager {
     terminals: HashMap<String, PtyInstance>,
     max_terminals: usize,
@@ -16,6 +37,8 @@ impl Drop for TerminalManager {
     fn drop(&mut self) {
         // Kill all remaining terminal processes when the app exits
         for (_id, mut inst) in self.terminals.drain() {
+            let pid = inst.pid;
+            kill_process_tree(pid);
             let _ = inst.child.kill();
             let _ = inst.child.wait();
         }
@@ -115,11 +138,14 @@ impl TerminalManager {
     pub fn close(&mut self, id: &str) -> Result<(), String> {
         let instance = self.terminals.remove(id);
         if let Some(mut inst) = instance {
-            // Kill the child process and wait for it to exit
+            let pid = inst.pid;
+            // First, kill the entire process tree (handles conhost.exe on Windows)
+            kill_process_tree(pid);
+            // Then try the normal kill as a fallback
             if let Err(e) = inst.child.kill() {
                 eprintln!("Warning: failed to kill terminal {}: {}", id, e);
             }
-            // Wait briefly for the process to actually terminate
+            // Wait for the process to actually terminate
             let _ = inst.child.wait();
             Ok(())
         } else {
@@ -130,6 +156,8 @@ impl TerminalManager {
     /// Kill all remaining terminal processes (called on app shutdown)
     pub fn close_all(&mut self) {
         for (id, mut inst) in self.terminals.drain() {
+            let pid = inst.pid;
+            kill_process_tree(pid);
             let _ = inst.child.kill();
             let _ = inst.child.wait();
             eprintln!("Cleaned up terminal {}", id);
