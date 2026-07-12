@@ -215,6 +215,25 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            use tauri::Manager;
+            let window = app.get_webview_window("main").expect("main window not found");
+            // Set window to 45% of screen size and center
+            if let Ok(Some(monitor)) = window.current_monitor() {
+                let size = monitor.size();
+                let scale = monitor.scale_factor();
+                let logical_w = size.width as f64 / scale;
+                let logical_h = size.height as f64 / scale;
+                let new_w = logical_w * 0.78;
+                let new_h = logical_h * 0.78;
+                window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+                    width: new_w,
+                    height: new_h,
+                }))?;
+            }
+            window.center()?;
+            Ok(())
+        })
         .manage(AppState::new())
         .invoke_handler(tauri::generate_handler![
             create_terminal,

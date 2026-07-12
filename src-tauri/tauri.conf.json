@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nickkuk/nickk.github.io/main/src/schemas/tauri-2-schema.json",
   "productName": "MultiWindow Terminal",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.multiwindow.terminal",
   "build": {
     "frontendDist": "../dist",
@@ -14,10 +14,11 @@
     "windows": [
       {
         "title": "MultiWindow Terminal",
-        "width": 1280,
-        "height": 800,
+        "width": 1024,
+        "height": 640,
         "minWidth": 640,
         "minHeight": 480,
+        "center": true,
         "decorations": false,
         "transparent": false,
         "resizable": true,
@@ -31,6 +32,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

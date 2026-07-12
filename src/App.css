@@ -168,7 +168,16 @@ button:focus-visible {
 }
 
 /* ===== Smooth transitions for theme change ===== */
-* {
+/* Scoped to avoid flickering on window resize */
+.app-container,
+.card,
+.glass,
+.tab-bar,
+.terminal-titlebar,
+button,
+input,
+textarea,
+.tab-item {
   transition: background-color var(--transition-normal) var(--ease-smooth),
               border-color var(--transition-normal) var(--ease-smooth);
 }
