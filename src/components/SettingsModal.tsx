@@ -70,8 +70,7 @@ const SettingsModal: React.FC = () => {
 
       if (!selected) return; // user cancelled
 
-      const filePath = typeof selected === "string" ? selected : selected.path;
-      if (!filePath) return;
+      const filePath = selected;
 
       setImageLoading(true);
 
