@@ -181,6 +181,34 @@ fn get_advanced_settings(
     }))
 }
 
+#[tauri::command]
+fn get_common_dirs() -> Result<serde_json::Value, String> {
+    let home = dirs::home_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let desktop = dirs::desktop_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let documents = dirs::document_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let downloads = dirs::download_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    Ok(serde_json::json!({
+        "home": home,
+        "desktop": desktop,
+        "documents": documents,
+        "downloads": downloads,
+    }))
+}
+
+#[tauri::command]
+fn get_app_version(app_handle: tauri::AppHandle) -> String {
+    app_handle.package_info().version.to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -204,6 +232,8 @@ pub fn run() {
             save_background_code,
             save_background_enabled,
             get_advanced_settings,
+            get_common_dirs,
+            get_app_version,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -11,6 +11,7 @@ const zh: Record<string, string> = {
 
   // About modal
   "about.title": "关于",
+  "about.version": "版本",
 
   // Settings modal
   "settings.title": "设置",
@@ -46,6 +47,20 @@ const zh: Record<string, string> = {
   "tab.splitV": "垂直分割",
   "tab.close": "关闭",
 
+  // Dialog
+  "dialog.selectDir": "选择终端工作目录",
+  "dialog.selectDirTitle": "选择工作目录",
+  "dialog.quickSelect": "常用目录",
+  "dialog.home": "主目录",
+  "dialog.desktop": "桌面",
+  "dialog.documents": "文档",
+  "dialog.downloads": "下载",
+  "dialog.customPath": "自定义路径",
+  "dialog.pathPlaceholder": "输入或粘贴目录路径...",
+  "dialog.browse": "浏览",
+  "dialog.cancel": "取消",
+  "dialog.confirm": "确认",
+
   // Empty states
   "empty.noTerminals": "没有打开的终端",
   "empty.hint": "点击 + 按钮或按 Ctrl+Shift+T 创建一个",
@@ -62,6 +77,7 @@ const en: Record<string, string> = {
 
   // About modal
   "about.title": "About",
+  "about.version": "Version",
 
   // Settings modal
   "settings.title": "Settings",
@@ -96,6 +112,20 @@ const en: Record<string, string> = {
   "tab.splitH": "Split Horizontally",
   "tab.splitV": "Split Vertically",
   "tab.close": "Close",
+
+  // Dialog
+  "dialog.selectDir": "Select Terminal Working Directory",
+  "dialog.selectDirTitle": "Select Working Directory",
+  "dialog.quickSelect": "Common Directories",
+  "dialog.home": "Home",
+  "dialog.desktop": "Desktop",
+  "dialog.documents": "Documents",
+  "dialog.downloads": "Downloads",
+  "dialog.customPath": "Custom Path",
+  "dialog.pathPlaceholder": "Type or paste a directory path...",
+  "dialog.browse": "Browse",
+  "dialog.cancel": "Cancel",
+  "dialog.confirm": "Confirm",
 
   // Empty states
   "empty.noTerminals": "No Terminals Open",

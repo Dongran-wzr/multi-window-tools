@@ -26,6 +26,7 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
   const fitAddonRef = useRef<FitAddon | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [nameInput, setNameInput] = useState(terminal.name);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const { writeToTerminal, resizeTerminal, closeTerminal, renameTerminal } = useTerminal();
   const setActiveTerminal = useTerminalStore((s) => s.setActiveTerminal);
 
@@ -77,6 +78,55 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
     // Handle terminal input
     term.onData((data) => {
       writeToTerminal(terminal.id, data);
+    });
+
+    // Custom key handler for smart copy/paste
+    // - Ctrl+C with selection → copy (VS Code / Windows Terminal behavior)
+    // - Ctrl+C without selection → let terminal handle (SIGINT)
+    // - Ctrl+Shift+C/V → force copy/paste
+    term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
+      const isMod = event.ctrlKey || event.metaKey;
+
+      // Ctrl+Shift+C: Force copy
+      if (isMod && event.shiftKey && (event.key === "C" || event.key === "c")) {
+        const selection = term.getSelection();
+        if (selection) {
+          navigator.clipboard.writeText(selection).catch(() => {});
+        }
+        return false;
+      }
+
+      // Ctrl+Shift+V: Force paste
+      if (isMod && event.shiftKey && (event.key === "V" || event.key === "v")) {
+        navigator.clipboard.readText().then((text) => {
+          if (text) {
+            writeToTerminal(terminal.id, text);
+          }
+        }).catch(() => {});
+        return false;
+      }
+
+      // Ctrl+C: smart copy — copy if selected, else let terminal handle (SIGINT)
+      if (isMod && !event.shiftKey && (event.key === "c" || event.key === "C")) {
+        const selection = term.getSelection();
+        if (selection) {
+          navigator.clipboard.writeText(selection).catch(() => {});
+          return false;
+        }
+        // No selection → pass through to terminal as SIGINT
+      }
+
+      // Ctrl+V: always paste from clipboard
+      if (isMod && !event.shiftKey && (event.key === "v" || event.key === "V")) {
+        navigator.clipboard.readText().then((text) => {
+          if (text) {
+            writeToTerminal(terminal.id, text);
+          }
+        }).catch(() => {});
+        return false;
+      }
+
+      return true;
     });
 
     // Handle resize
@@ -173,6 +223,39 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
       setIsRenaming(false);
     }
   };
+
+  // Right-click context menu
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleCopy = () => {
+    if (xtermRef.current) {
+      const selection = xtermRef.current.getSelection();
+      if (selection) {
+        navigator.clipboard.writeText(selection).catch(() => {});
+      }
+    }
+    setContextMenu(null);
+  };
+
+  const handlePaste = () => {
+    navigator.clipboard.readText().then((text) => {
+      if (text) {
+        writeToTerminal(terminal.id, text);
+      }
+    }).catch(() => {});
+    setContextMenu(null);
+  };
+
+  // Close context menu on any outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [contextMenu]);
 
   return (
     <motion.div
@@ -340,11 +423,87 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
       {/* Terminal content */}
       <div
         ref={terminalRef}
+        onContextMenu={handleContextMenu}
         style={{
           flex: 1,
           overflow: "hidden",
         }}
       />
+
+      {/* Right-click context menu */}
+      {contextMenu && (
+        <div
+          className="context-menu"
+          style={{
+            position: "fixed",
+            left: contextMenu.x,
+            top: contextMenu.y,
+            zIndex: 200,
+            background: "var(--card-bg)",
+            border: "1px solid var(--card-border)",
+            borderRadius: "8px",
+            padding: "6px",
+            minWidth: "150px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <button
+            onClick={handleCopy}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              width: "100%",
+              padding: "8px 12px",
+              border: "none",
+              borderRadius: "6px",
+              background: "transparent",
+              color: "var(--text-primary)",
+              fontSize: "12px",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--bg-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <span style={{ fontSize: "10px", color: "var(--text-muted)", width: "50px" }}>
+              Ctrl+C
+            </span>
+            复制
+          </button>
+          <button
+            onClick={handlePaste}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              width: "100%",
+              padding: "8px 12px",
+              border: "none",
+              borderRadius: "6px",
+              background: "transparent",
+              color: "var(--text-primary)",
+              fontSize: "12px",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--bg-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <span style={{ fontSize: "10px", color: "var(--text-muted)", width: "50px" }}>
+              Ctrl+V
+            </span>
+            粘贴
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
