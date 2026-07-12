@@ -130,7 +130,7 @@ const AboutModal: React.FC = () => {
                 </p>
                 <p>Created By Dongran</p>
                 <p style={{ color: "var(--accent)", marginTop: "4px" }}>
-                  -- ThrE_moUse Team --
+                  -- Three Mouse S・J・W Team --
                 </p>
               </div>
             </motion.div>

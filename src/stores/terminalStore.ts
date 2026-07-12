@@ -122,8 +122,16 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
     }),
 
   setActiveTerminal: (id) =>
-    set({
-      activeTerminalId: id,
+    set((state) => {
+      // If switching to a different terminal while one is maximized, unmaximize it
+      const maximizedTerminal = state.terminals.find((t) => t.isMaximized);
+      const shouldUnmaximize = maximizedTerminal && maximizedTerminal.id !== id;
+      return {
+        activeTerminalId: id,
+        terminals: shouldUnmaximize
+          ? state.terminals.map((t) => ({ ...t, isMaximized: false }))
+          : state.terminals,
+      };
     }),
 
   updateTerminalStatus: (id, status) =>
