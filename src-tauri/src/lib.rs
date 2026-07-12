@@ -3,6 +3,7 @@ mod state;
 mod terminal;
 
 use state::AppState;
+use tauri::Manager;
 use uuid::Uuid;
 
 #[tauri::command]
@@ -211,12 +212,11 @@ fn get_app_version(app_handle: tauri::AppHandle) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            use tauri::Manager;
             let window = app.get_webview_window("main").expect("main window not found");
             // Set window to 45% of screen size and center
             if let Ok(Some(monitor)) = window.current_monitor() {
@@ -254,6 +254,16 @@ pub fn run() {
             get_common_dirs,
             get_app_version,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if let tauri::RunEvent::ExitRequested { .. } = &event {
+            // Explicitly kill all terminal processes before exiting
+            let state = app_handle.state::<AppState>();
+            if let Ok(mut manager) = state.terminal_manager.lock() {
+                manager.close_all();
+            };
+        }
+    });
 }

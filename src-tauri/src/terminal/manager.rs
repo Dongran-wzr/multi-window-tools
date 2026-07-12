@@ -12,6 +12,16 @@ pub struct TerminalManager {
     max_terminals: usize,
 }
 
+impl Drop for TerminalManager {
+    fn drop(&mut self) {
+        // Kill all remaining terminal processes when the app exits
+        for (_id, mut inst) in self.terminals.drain() {
+            let _ = inst.child.kill();
+            let _ = inst.child.wait();
+        }
+    }
+}
+
 impl TerminalManager {
     pub fn new() -> Self {
         TerminalManager {
@@ -105,11 +115,24 @@ impl TerminalManager {
     pub fn close(&mut self, id: &str) -> Result<(), String> {
         let instance = self.terminals.remove(id);
         if let Some(mut inst) = instance {
-            // Kill the child process
-            let _ = inst.child.kill();
+            // Kill the child process and wait for it to exit
+            if let Err(e) = inst.child.kill() {
+                eprintln!("Warning: failed to kill terminal {}: {}", id, e);
+            }
+            // Wait briefly for the process to actually terminate
+            let _ = inst.child.wait();
             Ok(())
         } else {
             Err("Terminal not found".to_string())
+        }
+    }
+
+    /// Kill all remaining terminal processes (called on app shutdown)
+    pub fn close_all(&mut self) {
+        for (id, mut inst) in self.terminals.drain() {
+            let _ = inst.child.kill();
+            let _ = inst.child.wait();
+            eprintln!("Cleaned up terminal {}", id);
         }
     }
 
