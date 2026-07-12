@@ -1,0 +1,88 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:          # 允许手动触发
+
+jobs:
+  # ──────────────────────────────────────
+  # 三平台并行构建
+  # ──────────────────────────────────────
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false       # 一个平台失败不影响其他
+      matrix:
+        include:
+          - name: Windows
+            platform: windows-latest
+            target: x86_64-pc-windows-msvc
+
+          - name: macOS (Apple Silicon)
+            platform: macos-latest
+            target: aarch64-apple-darwin
+
+          - name: Linux
+            platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: 安装 Linux 系统依赖（WebKitGTK 等）
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev
+
+      - name: 安装前端依赖
+        run: npm install
+
+      - name: Tauri 构建
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # 仅在推送 tag 时创建 Release
+          tagName: ${{ github.ref_name }}
+          releaseName: 'v__VERSION__'
+          releaseBody: |
+            ## 📥 下载
+
+            | 平台 | 安装包 |
+            |------|--------|
+            | Windows | `.msi` / `.exe` |
+            | macOS | `.dmg` |
+            | Linux | `.deb` / `.AppImage` |
+
+            > 详见下方 Assets 列表，选择对应系统的文件下载安装。
+
+            ---
+            💡 提交反馈请到 [Issues](https://github.com/${{ github.repository }}/issues)。
+          releaseDraft: true   # 先新建草稿，人工检查后再发布
+          prerelease: false
+          args: --target ${{ matrix.target }}
