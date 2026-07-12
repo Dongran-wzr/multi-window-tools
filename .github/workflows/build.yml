@@ -1,5 +1,8 @@
 name: Build & Release
 
+permissions:
+  contents: write   # 允许创建 Release
+
 on:
   push:
     branches: [main, master]
