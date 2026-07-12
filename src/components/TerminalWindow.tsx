@@ -83,7 +83,8 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
     // Custom key handler for smart copy/paste
     // - Ctrl+C with selection → copy (VS Code / Windows Terminal behavior)
     // - Ctrl+C without selection → let terminal handle (SIGINT)
-    // - Ctrl+Shift+C/V → force copy/paste
+    // - Ctrl+Shift+C → force copy
+    // - Ctrl+V is handled natively by xterm.js via the browser paste event
     term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
       const isMod = event.ctrlKey || event.metaKey;
 
@@ -96,7 +97,7 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
         return false;
       }
 
-      // Ctrl+Shift+V: Force paste
+      // Ctrl+Shift+V: Force paste (fallback for non-standard paste)
       if (isMod && event.shiftKey && (event.key === "V" || event.key === "v")) {
         navigator.clipboard.readText().then((text) => {
           if (text) {
@@ -114,16 +115,6 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
           return false;
         }
         // No selection → pass through to terminal as SIGINT
-      }
-
-      // Ctrl+V: always paste from clipboard
-      if (isMod && !event.shiftKey && (event.key === "v" || event.key === "V")) {
-        navigator.clipboard.readText().then((text) => {
-          if (text) {
-            writeToTerminal(terminal.id, text);
-          }
-        }).catch(() => {});
-        return false;
       }
 
       return true;
