@@ -40,6 +40,16 @@ const zh: Record<string, string> = {
     "编写 CSS 代码来自定义背景样式，例如渐变、动画等。代码会自动保存并在每次打开应用时生效。",
   "settings.advanced.background.enable": "启用自定义背景",
 
+  // Free layout
+  "settings.advanced.freeLayout": "自由窗口排布设置",
+  "settings.advanced.freeLayout.desc": "开启后可通过拖拽窗口边缘自由调整终端大小和位置",
+  "settings.advanced.freeLayout.preview": "预览效果",
+  "settings.advanced.freeLayout.reset": "复位",
+
+  // Connected resize
+  "settings.advanced.connectedResize": "窗口联动调整",
+  "settings.advanced.connectedResize.desc": "开启后调整一个窗口大小时，相邻窗口会同步压缩或扩展，保持彼此相连无间隙",
+
   // Tab context menu
   "tab.rename": "重命名",
   "tab.restart": "重启终端",
@@ -106,6 +116,16 @@ const en: Record<string, string> = {
   "settings.advanced.background.code.hint":
     "Write CSS code to customize the background style, such as gradients, animations, etc. The code is saved automatically and applied each time the app opens.",
   "settings.advanced.background.enable": "Enable Custom Background",
+
+  // Free layout
+  "settings.advanced.freeLayout": "Free Window Layout",
+  "settings.advanced.freeLayout.desc": "When enabled, you can freely resize and reposition terminal windows by dragging their edges",
+  "settings.advanced.freeLayout.preview": "Preview",
+  "settings.advanced.freeLayout.reset": "Reset",
+
+  // Connected resize
+  "settings.advanced.connectedResize": "Connected Window Resize",
+  "settings.advanced.connectedResize.desc": "When enabled, resizing one window will simultaneously push or squeeze adjacent windows, keeping them connected without gaps",
 
   // Tab context menu
   "tab.rename": "Rename",

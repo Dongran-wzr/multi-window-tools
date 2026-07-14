@@ -186,3 +186,76 @@ textarea,
 .no-transitions * {
   transition: none !important;
 }
+
+/* ===== Resize handles ===== */
+.resize-handle {
+  position: absolute;
+  z-index: 50;
+  /* Transparent by default, subtle reveal on hover */
+  transition: background-color 0.15s ease;
+}
+
+/* Edge handles */
+.resize-n {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+}
+.resize-s {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+}
+.resize-e {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+.resize-w {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+
+/* Corner handles */
+.resize-ne {
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+}
+.resize-nw {
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+}
+.resize-se {
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+}
+.resize-sw {
+  bottom: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+}
+
+/* Subtle visual indicator on hover — faint accent line */
+.resize-handle:hover {
+  background-color: rgba(108, 140, 255, 0.08);
+}
+
+/* Corner handles get a slightly stronger hover */
+.resize-ne:hover,
+.resize-nw:hover,
+.resize-se:hover,
+.resize-sw:hover {
+  background-color: rgba(108, 140, 255, 0.12);
+}

@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from "react";
-import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, RotateCcw } from "lucide-react";
 import { useTerminalStore } from "../stores/terminalStore";
 import { useTerminal } from "../hooks/useTerminal";
+import { useI18n } from "../i18n/translations";
 import DirectoryPickerModal from "./DirectoryPickerModal";
 
 const AddButton: React.FC = () => {
@@ -10,12 +11,22 @@ const AddButton: React.FC = () => {
     const visible = s.terminals.filter((t) => t.gridSlot !== -1);
     return visible.length >= 9;
   });
+  const freeLayoutEnabled = useTerminalStore((s) => s.freeLayoutEnabled);
+  const resetAllBounds = useTerminalStore((s) => s.resetAllBounds);
+  const hasCustomBounds = useTerminalStore((s) =>
+    s.terminals.some((t) => !!t.customBounds)
+  );
   const { createTerminal } = useTerminal();
+  const { t } = useI18n();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleClick = () => {
     if (isFull) return;
     setDialogOpen(true);
+  };
+
+  const handleReset = () => {
+    resetAllBounds();
   };
 
   const handleDirSelect = useCallback(
@@ -32,6 +43,46 @@ const AddButton: React.FC = () => {
 
   return (
     <>
+      {/* Reset button — shown above the add button when free layout is enabled */}
+      <AnimatePresence>
+        {freeLayoutEnabled && hasCustomBounds && (
+          <motion.button
+            className="add-button"
+            onClick={handleReset}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 20,
+            }}
+            title={t("settings.advanced.freeLayout.reset")}
+            style={{
+              position: "fixed",
+              bottom: "116px",
+              right: "18px",
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              border: "none",
+              background: "linear-gradient(135deg, #6b7280, #4b5563)",
+              color: "#fff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 90,
+              boxShadow: "0 3px 12px rgba(107, 114, 128, 0.35)",
+            }}
+          >
+            <RotateCcw size={18} strokeWidth={2.5} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       <motion.button
         className="add-button"
         onClick={handleClick}

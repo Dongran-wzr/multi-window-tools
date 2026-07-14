@@ -44,6 +44,14 @@ export function clearCapture(id: string): void {
   captureCache.delete(id);
 }
 
+/** Custom pixel bounds for a terminal window — when set, the window escapes the grid */
+export interface TerminalBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface TerminalInfo {
   id: string;
   name: string;
@@ -55,6 +63,8 @@ export interface TerminalInfo {
   cols: number;
   rows: number;
   isMaximized: boolean;
+  /** When set, the window is positioned absolutely with these pixel bounds */
+  customBounds?: TerminalBounds;
 }
 
 /** A frequently/recently used directory entry */
@@ -174,6 +184,12 @@ interface TerminalStore {
   backgroundCode: string;
   backgroundEnabled: boolean;
 
+  // Free window layout
+  freeLayoutEnabled: boolean;
+
+  // Connected window resize — adjacent windows push/squeeze each other
+  connectedResizeEnabled: boolean;
+
   // Fly-to-tab animation (portal overlay)
   flyAnimation: FlyAnimation | null;
   /** Terminal id currently mid reverse-genie re-open — kept hidden until it finishes. */
@@ -186,6 +202,7 @@ interface TerminalStore {
   updateTerminalStatus: (id: string, status: TerminalInfo["status"]) => void;
   updateTerminalName: (id: string, name: string) => void;
   setTerminalMaximized: (id: string, maximized: boolean) => void;
+  updateTerminalBounds: (id: string, bounds: TerminalBounds | null) => void;
   moveTerminalToSlot: (id: string, slot: number) => void;
   swapTerminals: (slotA: number, slotB: number) => void;
   setTheme: (theme: ThemeMode) => void;
@@ -197,6 +214,9 @@ interface TerminalStore {
   setBackgroundImage: (image: BackgroundImageData | null) => void;
   setBackgroundCode: (code: string) => void;
   setBackgroundEnabled: (enabled: boolean) => void;
+  setFreeLayoutEnabled: (enabled: boolean) => void;
+  setConnectedResizeEnabled: (enabled: boolean) => void;
+  resetAllBounds: () => void;
   setFlyAnimation: (anim: FlyAnimation | null) => void;
   setReopeningId: (id: string | null) => void;
   getTerminalBySlot: (slot: number) => TerminalInfo | undefined;
@@ -254,6 +274,8 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   backgroundImage: null,
   backgroundCode: "",
   backgroundEnabled: true,
+  freeLayoutEnabled: false,
+  connectedResizeEnabled: false,
   flyAnimation: null,
   reopeningId: null,
   recentDirectories: loadRecentDirs(),
@@ -321,7 +343,16 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   setTerminalMaximized: (id, maximized) =>
     set((state) => ({
       terminals: state.terminals.map((t) =>
-        t.id === id ? { ...t, isMaximized: maximized } : t
+        t.id === id
+          ? { ...t, isMaximized: maximized, customBounds: maximized ? undefined : t.customBounds }
+          : t
+      ),
+    })),
+
+  updateTerminalBounds: (id, bounds) =>
+    set((state) => ({
+      terminals: state.terminals.map((t) =>
+        t.id === id ? { ...t, customBounds: bounds ?? undefined } : t
       ),
     })),
 
@@ -374,6 +405,22 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   setBackgroundCode: (code) => set({ backgroundCode: code }),
 
   setBackgroundEnabled: (enabled) => set({ backgroundEnabled: enabled }),
+
+  setFreeLayoutEnabled: (enabled) =>
+    set((state) => ({
+      freeLayoutEnabled: enabled,
+      // When disabling free layout, clear all custom bounds
+      terminals: enabled
+        ? state.terminals
+        : state.terminals.map((t) => ({ ...t, customBounds: undefined })),
+    })),
+
+  setConnectedResizeEnabled: (enabled) => set({ connectedResizeEnabled: enabled }),
+
+  resetAllBounds: () =>
+    set((state) => ({
+      terminals: state.terminals.map((t) => ({ ...t, customBounds: undefined })),
+    })),
 
   setFlyAnimation: (anim) => set({ flyAnimation: anim }),
 

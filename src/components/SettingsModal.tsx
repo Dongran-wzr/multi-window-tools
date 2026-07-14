@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Monitor, Moon, Sun, Image, Trash2, Code, ChevronDown, ToggleLeft, ToggleRight } from "lucide-react";
+import { X, Monitor, Moon, Sun, Image, Trash2, Code, ChevronDown, ToggleLeft, ToggleRight, Layout } from "lucide-react";
 import { useTerminalStore, ThemeMode, FontLanguage } from "../stores/terminalStore";
 import { useI18n } from "../i18n/translations";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -23,6 +23,14 @@ const SettingsModal: React.FC = () => {
   const setBackgroundCode = useTerminalStore((s) => s.setBackgroundCode);
   const backgroundEnabled = useTerminalStore((s) => s.backgroundEnabled);
   const setBackgroundEnabled = useTerminalStore((s) => s.setBackgroundEnabled);
+
+  // Free layout
+  const freeLayoutEnabled = useTerminalStore((s) => s.freeLayoutEnabled);
+  const setFreeLayoutEnabled = useTerminalStore((s) => s.setFreeLayoutEnabled);
+
+  // Connected resize
+  const connectedResizeEnabled = useTerminalStore((s) => s.connectedResizeEnabled);
+  const setConnectedResizeEnabled = useTerminalStore((s) => s.setConnectedResizeEnabled);
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
@@ -626,6 +634,401 @@ const SettingsModal: React.FC = () => {
                           >
                             {t("settings.advanced.background.code.hint")}
                           </p>
+                        </div>
+
+                        {/* Divider */}
+                        <div
+                          style={{
+                            height: "1px",
+                            background: "var(--card-border)",
+                          }}
+                        />
+
+                        {/* Free Window Layout */}
+                        <div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <Layout size={15} style={{ color: "var(--text-secondary)" }} />
+                              <div>
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: 500,
+                                    color: "var(--text-primary)",
+                                  }}
+                                >
+                                  {t("settings.advanced.freeLayout")}
+                                </span>
+                              </div>
+                            </div>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                const next = !freeLayoutEnabled;
+                                setFreeLayoutEnabled(next);
+                                // Turning off free layout also turns off connected resize
+                                if (!next && connectedResizeEnabled) {
+                                  setConnectedResizeEnabled(false);
+                                }
+                              }}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: freeLayoutEnabled
+                                  ? "var(--accent)"
+                                  : "var(--text-muted)",
+                                cursor: "pointer",
+                                padding: 0,
+                                display: "flex",
+                              }}
+                            >
+                              {freeLayoutEnabled ? (
+                                <ToggleRight size={28} />
+                              ) : (
+                                <ToggleLeft size={28} />
+                              )}
+                            </motion.button>
+                          </div>
+                          <p
+                            style={{
+                              fontSize: "10px",
+                              color: "var(--text-muted)",
+                              marginTop: "8px",
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {t("settings.advanced.freeLayout.desc")}
+                          </p>
+
+                          {/* Preview */}
+                          <div
+                            style={{
+                              marginTop: "12px",
+                              padding: "12px",
+                              borderRadius: "8px",
+                              background: "var(--bg-primary)",
+                              border: "1px solid var(--card-border)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: 500,
+                                color: "var(--text-muted)",
+                                marginBottom: "8px",
+                                display: "block",
+                              }}
+                            >
+                              {t("settings.advanced.freeLayout.preview")}
+                            </span>
+                            {/* Mini grid preview */}
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(3, 1fr)",
+                                gridTemplateRows: "repeat(2, 1fr)",
+                                gap: "4px",
+                                height: "64px",
+                                position: "relative",
+                              }}
+                            >
+                              {/* Standard grid cells */}
+                              <div
+                                style={{
+                                  borderRadius: "3px",
+                                  background: "var(--accent-dim)",
+                                  border: "1px solid var(--accent)",
+                                  opacity: freeLayoutEnabled ? 0.4 : 1,
+                                  transition: "all 0.3s ease",
+                                }}
+                              />
+                              <div
+                                style={{
+                                  borderRadius: "3px",
+                                  background: "var(--accent-dim)",
+                                  border: "1px solid var(--accent)",
+                                  opacity: freeLayoutEnabled ? 0.4 : 1,
+                                  transition: "all 0.3s ease",
+                                }}
+                              />
+                              <div
+                                style={{
+                                  borderRadius: "3px",
+                                  background: "var(--accent-dim)",
+                                  border: "1px solid var(--accent)",
+                                  opacity: freeLayoutEnabled ? 0.4 : 1,
+                                  transition: "all 0.3s ease",
+                                }}
+                              />
+                              <div
+                                style={{
+                                  borderRadius: "3px",
+                                  background: "var(--accent-dim)",
+                                  border: "1px solid var(--accent)",
+                                  opacity: freeLayoutEnabled ? 0.4 : 1,
+                                  transition: "all 0.3s ease",
+                                }}
+                              />
+
+                              {/* Free-layout overlay window (only visible when enabled) */}
+                              {freeLayoutEnabled && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                                  style={{
+                                    position: "absolute",
+                                    left: "45%",
+                                    top: "20%",
+                                    width: "50%",
+                                    height: "70%",
+                                    borderRadius: "4px",
+                                    background: "var(--accent)",
+                                    opacity: 0.7,
+                                    zIndex: 2,
+                                    boxShadow: "0 2px 8px rgba(108,140,255,0.4)",
+                                  }}
+                                >
+                                  {/* Resize handles on the preview */}
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      right: 0,
+                                      bottom: 0,
+                                      width: "8px",
+                                      height: "8px",
+                                      background: "#fff",
+                                      borderRadius: "0 0 3px 0",
+                                      opacity: 0.6,
+                                    }}
+                                  />
+                                </motion.div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div
+                          style={{
+                            height: "1px",
+                            background: "var(--card-border)",
+                          }}
+                        />
+
+                        {/* Connected Window Resize */}
+                        <div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ color: "var(--text-secondary)" }}
+                              >
+                                <rect x="2" y="3" width="9" height="8" rx="1" />
+                                <rect x="13" y="3" width="9" height="8" rx="1" />
+                                <rect x="2" y="13" width="9" height="9" rx="1" />
+                                <rect x="13" y="13" width="9" height="9" rx="1" />
+                              </svg>
+                              <div>
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: 500,
+                                    color: "var(--text-primary)",
+                                  }}
+                                >
+                                  {t("settings.advanced.connectedResize")}
+                                </span>
+                              </div>
+                            </div>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                const next = !connectedResizeEnabled;
+                                setConnectedResizeEnabled(next);
+                                // Connected resize requires free layout to be enabled
+                                if (next && !freeLayoutEnabled) {
+                                  setFreeLayoutEnabled(true);
+                                }
+                              }}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: connectedResizeEnabled
+                                  ? "var(--accent)"
+                                  : "var(--text-muted)",
+                                cursor: "pointer",
+                                padding: 0,
+                                display: "flex",
+                              }}
+                            >
+                              {connectedResizeEnabled ? (
+                                <ToggleRight size={28} />
+                              ) : (
+                                <ToggleLeft size={28} />
+                              )}
+                            </motion.button>
+                          </div>
+                          <p
+                            style={{
+                              fontSize: "10px",
+                              color: "var(--text-muted)",
+                              marginTop: "8px",
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {t("settings.advanced.connectedResize.desc")}
+                          </p>
+
+                          {/* Preview */}
+                          <div
+                            style={{
+                              marginTop: "12px",
+                              padding: "12px",
+                              borderRadius: "8px",
+                              background: "var(--bg-primary)",
+                              border: "1px solid var(--card-border)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: 500,
+                                color: "var(--text-muted)",
+                                marginBottom: "8px",
+                                display: "block",
+                              }}
+                            >
+                              {t("settings.advanced.freeLayout.preview")}
+                            </span>
+                            {/* Mini connected-resize preview */}
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(2, 1fr)",
+                                gridTemplateRows: "repeat(2, 1fr)",
+                                gap: "3px",
+                                height: "64px",
+                                position: "relative",
+                              }}
+                            >
+                              {[0, 1, 2, 3].map((i) => (
+                                <div
+                                  key={i}
+                                  style={{
+                                    borderRadius: "3px",
+                                    background: connectedResizeEnabled
+                                      ? "var(--accent-dim)"
+                                      : "var(--bg-tertiary)",
+                                    border: connectedResizeEnabled
+                                      ? "1px solid var(--accent)"
+                                      : "1px solid var(--card-border)",
+                                    transition: "all 0.3s ease",
+                                    position: "relative",
+                                  }}
+                                >
+                                  {/* Show connection markers between adjacent cells */}
+                                  {connectedResizeEnabled && i === 0 && (
+                                    <>
+                                      <div
+                                        style={{
+                                          position: "absolute",
+                                          right: -2,
+                                          top: "25%",
+                                          height: "50%",
+                                          width: "3px",
+                                          background: "var(--accent)",
+                                          borderRadius: "1px",
+                                          opacity: 0.7,
+                                        }}
+                                      />
+                                      <div
+                                        style={{
+                                          position: "absolute",
+                                          bottom: -2,
+                                          left: "25%",
+                                          width: "50%",
+                                          height: "3px",
+                                          background: "var(--accent)",
+                                          borderRadius: "1px",
+                                          opacity: 0.7,
+                                        }}
+                                      />
+                                    </>
+                                  )}
+                                  {connectedResizeEnabled && i === 1 && (
+                                    <div
+                                      style={{
+                                        position: "absolute",
+                                        bottom: -2,
+                                        left: "25%",
+                                        width: "50%",
+                                        height: "3px",
+                                        background: "var(--accent)",
+                                        borderRadius: "1px",
+                                        opacity: 0.7,
+                                      }}
+                                    />
+                                  )}
+                                  {connectedResizeEnabled && i === 2 && (
+                                    <div
+                                      style={{
+                                        position: "absolute",
+                                        right: -2,
+                                        top: "25%",
+                                        height: "50%",
+                                        width: "3px",
+                                        background: "var(--accent)",
+                                        borderRadius: "1px",
+                                        opacity: 0.7,
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                              {/* Drag indicator */}
+                              {connectedResizeEnabled && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.3 }}
+                                  style={{
+                                    position: "absolute",
+                                    left: "50%",
+                                    top: 0,
+                                    bottom: 0,
+                                    width: "4px",
+                                    background: "var(--accent)",
+                                    borderRadius: "2px",
+                                    opacity: 0.8,
+                                    transform: "translateX(-50%)",
+                                    zIndex: 2,
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </motion.div>

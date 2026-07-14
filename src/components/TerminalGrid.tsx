@@ -76,6 +76,7 @@ const TerminalGrid: React.FC = () => {
   const terminals = useTerminalStore((s) => s.terminals);
   const reopeningId = useTerminalStore((s) => s.reopeningId);
   const setTerminalMaximized = useTerminalStore((s) => s.setTerminalMaximized);
+  const freeLayoutEnabled = useTerminalStore((s) => s.freeLayoutEnabled);
   const { t } = useI18n();
   const { cells, gridCols, gridRows, isMaximized, maximizedTerminalId } =
     useGridLayout();
@@ -208,13 +209,15 @@ const TerminalGrid: React.FC = () => {
           const terminal = terminals.find((t) => t.id === cell.terminalId);
           if (!terminal) return null;
 
+          const hasCustomBounds = !!terminal.customBounds && !isMaximized && freeLayoutEnabled;
+
           return (
             <motion.div
               key={terminal.id}
               className={GRID_CELL_CLASS}
               data-grid-slot={cell.slot}
-              layout
-              layoutId={terminal.id}
+              layout={!hasCustomBounds}
+              layoutId={hasCustomBounds ? undefined : terminal.id}
               initial={
                 terminal.id === reopeningId
                   ? false
@@ -231,12 +234,25 @@ const TerminalGrid: React.FC = () => {
                   damping: 30,
                 },
               }}
-              style={{
-                gridRow: isMaximized ? "1 / -1" : `${cell.row + 1}`,
-                gridColumn: isMaximized ? "1 / -1" : `${cell.col + 1}`,
-                minHeight: 0,
-                minWidth: 0,
-              }}
+              style={
+                hasCustomBounds
+                  ? {
+                      position: "absolute",
+                      left: terminal.customBounds!.x,
+                      top: terminal.customBounds!.y,
+                      width: terminal.customBounds!.width,
+                      height: terminal.customBounds!.height,
+                      zIndex: 10,
+                      minHeight: 0,
+                      minWidth: 0,
+                    }
+                  : {
+                      gridRow: isMaximized ? "1 / -1" : `${cell.row + 1}`,
+                      gridColumn: isMaximized ? "1 / -1" : `${cell.col + 1}`,
+                      minHeight: 0,
+                      minWidth: 0,
+                    }
+              }
             >
               <TerminalWindow
                 terminal={terminal}
@@ -245,6 +261,7 @@ const TerminalGrid: React.FC = () => {
                 }
                 onMaximizeToggle={() => handleMaximizeToggle(terminal.id)}
                 onTitleBarDragStart={handleTitleBarPointerDown}
+                gridContainerRef={gridRef}
               />
             </motion.div>
           );
