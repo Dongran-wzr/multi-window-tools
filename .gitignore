@@ -2,6 +2,7 @@ node_modules/
 dist/
 .npm-cache/
 src-tauri/target/
+dock-genie/target/
 *.log
 .DS_Store
 Thumbs.db
