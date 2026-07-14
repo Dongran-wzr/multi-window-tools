@@ -1,4 +1,48 @@
 import { create } from "zustand";
+import type { MinifyDirection } from "../utils/minifyAnimation";
+
+/** Fly-to-tab animation descriptor — stored when a window is being hidden/closed */
+export interface FlyAnimation {
+  terminalId: string;
+  terminalName: string;
+  terminalStatus: string;
+  /** Window bounding rect at the moment of click (viewport coords) */
+  startRect: { left: number; top: number; width: number; height: number };
+  /** Target tab bounding rect at the moment of click (viewport coords) */
+  endRect: { left: number; top: number; width: number; height: number };
+  /** If true, fully remove the terminal from store after animation completes */
+  removeAfter: boolean;
+  /** Genie direction: "in" = window→tab (hide/close), "out" = tab→window (re-open). */
+  direction?: MinifyDirection;
+  /** Cloned xterm DOM HTML — renders the real terminal content in the ghost */
+  contentHTML?: string;
+  /** Canvas from html2canvas capture — enables WebGL shader animation */
+  captureCanvas?: HTMLCanvasElement;
+}
+
+/**
+ * Per-terminal capture cache. A window's last html2canvas texture is stashed here
+ * when it minimizes, so the reverse ("out") genie can reuse it when the tab is
+ * re-opened — the minimized window has no live DOM to re-capture.
+ */
+const captureCache = new Map<string, HTMLCanvasElement>();
+
+/** Stash a window capture for later reverse-genie playback. */
+export function cacheCapture(id: string, canvas: HTMLCanvasElement): void {
+  captureCache.set(id, canvas);
+}
+
+/** Retrieve (and remove) a cached capture, or undefined if none. */
+export function takeCapture(id: string): HTMLCanvasElement | undefined {
+  const c = captureCache.get(id);
+  captureCache.delete(id);
+  return c;
+}
+
+/** Drop a cached capture without consuming it. */
+export function clearCapture(id: string): void {
+  captureCache.delete(id);
+}
 
 export interface TerminalInfo {
   id: string;
@@ -44,6 +88,11 @@ interface TerminalStore {
   backgroundCode: string;
   backgroundEnabled: boolean;
 
+  // Fly-to-tab animation (portal overlay)
+  flyAnimation: FlyAnimation | null;
+  /** Terminal id currently mid reverse-genie re-open — kept hidden until it finishes. */
+  reopeningId: string | null;
+
   // Actions
   addTerminal: (terminal: TerminalInfo) => void;
   removeTerminal: (id: string) => void;
@@ -62,6 +111,8 @@ interface TerminalStore {
   setBackgroundImage: (image: BackgroundImageData | null) => void;
   setBackgroundCode: (code: string) => void;
   setBackgroundEnabled: (enabled: boolean) => void;
+  setFlyAnimation: (anim: FlyAnimation | null) => void;
+  setReopeningId: (id: string | null) => void;
   getTerminalBySlot: (slot: number) => TerminalInfo | undefined;
   getNextAvailableSlot: () => number;
   getActiveTerminal: () => TerminalInfo | undefined;
@@ -112,6 +163,8 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   backgroundImage: null,
   backgroundCode: "",
   backgroundEnabled: true,
+  flyAnimation: null,
+  reopeningId: null,
 
   addTerminal: (terminal) =>
     set((state) => ({
@@ -122,6 +175,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
 
   removeTerminal: (id) =>
     set((state) => {
+      clearCapture(id);
       const filtered = compactAndRenumber(
         state.terminals.filter((t) => t.id !== id)
       );
@@ -228,6 +282,10 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   setBackgroundCode: (code) => set({ backgroundCode: code }),
 
   setBackgroundEnabled: (enabled) => set({ backgroundEnabled: enabled }),
+
+  setFlyAnimation: (anim) => set({ flyAnimation: anim }),
+
+  setReopeningId: (id) => set({ reopeningId: id }),
 
   getTerminalBySlot: (slot) => {
     return get().terminals.find((t) => t.gridSlot === slot);

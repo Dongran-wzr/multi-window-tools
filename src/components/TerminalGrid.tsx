@@ -74,6 +74,7 @@ function createGhost(
 
 const TerminalGrid: React.FC = () => {
   const terminals = useTerminalStore((s) => s.terminals);
+  const reopeningId = useTerminalStore((s) => s.reopeningId);
   const setTerminalMaximized = useTerminalStore((s) => s.setTerminalMaximized);
   const { t } = useI18n();
   const { cells, gridCols, gridRows, isMaximized, maximizedTerminalId } =
@@ -214,12 +215,16 @@ const TerminalGrid: React.FC = () => {
               data-grid-slot={cell.slot}
               layout
               layoutId={terminal.id}
-              initial={{ opacity: 0, scale: 0.5 }}
+              initial={
+                terminal.id === reopeningId
+                  ? false
+                  : { opacity: 0, scale: 0.5 }
+              }
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
+              exit={{ opacity: 0, scale: 0.85 }}
               transition={{
-                opacity: { duration: 0.2 },
-                scale: { duration: 0.28, ease: [0.34, 1.56, 0.64, 1] },
+                opacity: { duration: 0.12 },
+                scale: { duration: 0.2, ease: [0.4, 0, 0.6, 1] },
                 layout: {
                   type: "spring",
                   stiffness: 300,

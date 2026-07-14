@@ -5,6 +5,7 @@ import TabBar from "./components/TabBar";
 import AddButton from "./components/AddButton";
 import SettingsModal from "./components/SettingsModal";
 import AboutModal from "./components/AboutModal";
+import SuckOverlay from "./components/SuckOverlay";
 import { useTerminalStore, ThemeMode } from "./stores/terminalStore";
 import { useTerminal } from "./hooks/useTerminal";
 import { invoke } from "@tauri-apps/api/core";
@@ -206,6 +207,7 @@ const App: React.FC = () => {
       <AddButton />
       <SettingsModal />
       <AboutModal />
+      <SuckOverlay />
     </div>
   );
 };

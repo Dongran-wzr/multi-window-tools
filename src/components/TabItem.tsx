@@ -111,6 +111,7 @@ const TabItem: React.FC<TabItemProps> = ({
     <>
       <div
         draggable
+        data-terminal-id={terminalId}
         onDragStart={onTabDragStart}
         onDragOver={onTabDragOver}
         onDrop={onTabDrop}

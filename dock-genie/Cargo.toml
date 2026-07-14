@@ -1,0 +1,24 @@
+[package]
+name = "dock-genie"
+version = "0.1.0"
+edition = "2021"
+description = "macOS-style Genie 'suck into Dock' animation – Rust + wgpu fragment shader"
+
+[lib]
+name = "dock_genie"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dock-genie-demo"
+path = "src/main.rs"
+
+[dependencies]
+wgpu = "0.20"
+bytemuck = { version = "1", features = ["derive"] }
+log = "0.4"
+env_logger = "0.11"
+
+# Demo-only
+winit = "0.30"
+pollster = "0.4"
+image = "0.25"

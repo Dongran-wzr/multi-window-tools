@@ -5,7 +5,14 @@ import { Terminal as XtermTerminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { listen } from "@tauri-apps/api/event";
-import { useTerminalStore, TerminalInfo } from "../stores/terminalStore";
+import { invoke } from "@tauri-apps/api/core";
+import html2canvas from "html2canvas";
+import {
+  useTerminalStore,
+  TerminalInfo,
+  FlyAnimation,
+  cacheCapture,
+} from "../stores/terminalStore";
 import { useTerminal } from "../hooks/useTerminal";
 
 interface TerminalWindowProps {
@@ -22,13 +29,91 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
   onTitleBarDragStart,
 }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XtermTerminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [nameInput, setNameInput] = useState(terminal.name);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const { writeToTerminal, resizeTerminal, closeTerminal, renameTerminal } = useTerminal();
+  const { writeToTerminal, resizeTerminal, renameTerminal } = useTerminal();
   const setActiveTerminal = useTerminalStore((s) => s.setActiveTerminal);
+  const setFlyAnimation = useTerminalStore((s) => s.setFlyAnimation);
+  // Kept hidden while its reverse-genie re-open plays (SuckOverlay draws it instead).
+  const isReopening = useTerminalStore((s) => s.reopeningId === terminal.id);
+
+  /** Build a FlyAnimation descriptor from the window's and tab's current bounding rects.
+   *  Captures the full window DOM to canvas via html2canvas for the WebGL shader path. */
+  const buildFlyAnimation = useCallback(
+    async (removeAfter: boolean): Promise<FlyAnimation | null> => {
+      const windowEl = windowRef.current;
+      if (!windowEl) return null;
+
+      const winRect = windowEl.getBoundingClientRect();
+      const tabEl = document.querySelector(
+        `[data-terminal-id="${terminal.id}"]`,
+      ) as HTMLElement | null;
+      const fallbackRect: DOMRect = {
+        left: window.innerWidth / 2 - 80,
+        top: window.innerHeight - 48,
+        width: 160,
+        height: 36,
+      } as DOMRect;
+      const tabRect = tabEl ? tabEl.getBoundingClientRect() : fallbackRect;
+
+      // ── Capture full window via html2canvas (async, window still visible) ──
+      let captureCanvas: HTMLCanvasElement | undefined;
+      let contentHTML: string | undefined;
+      try {
+        captureCanvas = await html2canvas(windowEl, {
+          backgroundColor: null,
+          scale: 1,
+          logging: false,
+        });
+      } catch (err) {
+        console.warn("html2canvas capture failed:", err);
+      }
+
+      // Stash the capture so a re-open can replay it as a reverse genie.
+      // (A minimized window has no live DOM to re-capture.) Closing terminals
+      // don't re-open, so only cache when the window is being hidden.
+      if (captureCanvas && !removeAfter) {
+        cacheCapture(terminal.id, captureCanvas);
+      }
+
+      // ── Capture xterm DOM clone as CSS fallback ──
+      const xtermEl = terminalRef.current?.querySelector(".xterm") as HTMLElement | null;
+      if (xtermEl) {
+        const clone = xtermEl.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll("textarea, .xterm-cursor, .xterm-cursor-layer")
+          .forEach((el) => el.remove());
+        clone.querySelectorAll(".xterm-selection")
+          .forEach((el) => ((el as HTMLElement).style.display = "none"));
+        contentHTML = clone.outerHTML;
+      }
+
+      return {
+        terminalId: terminal.id,
+        terminalName: terminal.name,
+        terminalStatus: terminal.status,
+        startRect: {
+          left: winRect.left,
+          top: winRect.top,
+          width: winRect.width,
+          height: winRect.height,
+        },
+        endRect: {
+          left: tabRect.left,
+          top: tabRect.top,
+          width: tabRect.width,
+          height: tabRect.height,
+        },
+        removeAfter,
+        contentHTML,
+        captureCanvas,
+      };
+    },
+    [terminal.id, terminal.name, terminal.status],
+  );
 
   // Initialize xterm
   useEffect(() => {
@@ -185,12 +270,30 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
     }
   }, [isMaximized]);
 
-  const handleMinimize = () => {
+  const handleMinimize = async () => {
+    // Dim immediately for visual feedback during async capture
+    if (windowRef.current) {
+      windowRef.current.style.opacity = "0.7";
+      windowRef.current.style.transition = "opacity 0.1s ease";
+    }
+    const anim = await buildFlyAnimation(false);
+    if (anim) setFlyAnimation(anim);
+    // Hide from grid → triggers AnimatePresence exit; SuckOverlay takes over visually
     useTerminalStore.getState().moveTerminalToSlot(terminal.id, -1);
   };
 
   const handleClose = async () => {
-    await closeTerminal(terminal.id);
+    // Dim immediately for visual feedback during async capture
+    if (windowRef.current) {
+      windowRef.current.style.opacity = "0.7";
+      windowRef.current.style.transition = "opacity 0.1s ease";
+    }
+    const anim = await buildFlyAnimation(true);
+    if (anim) setFlyAnimation(anim);
+    // Hide from grid immediately (terminal stays in tab bar while animating)
+    useTerminalStore.getState().moveTerminalToSlot(terminal.id, -1);
+    // Kill the PTY process in the background
+    invoke("close_terminal", { id: terminal.id }).catch(console.error);
   };
 
   const handleDoubleClickTitle = () => {
@@ -250,22 +353,22 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
 
   return (
     <motion.div
+      ref={windowRef}
       className="terminal-window card"
+      data-window-id={terminal.id}
       onClick={() => setActiveTerminal(terminal.id)}
-      initial={{
-        scale: 0.5,
-        opacity: 0,
-      }}
-      animate={{
-        scale: 1,
-        opacity: 1,
-      }}
+      initial={
+        isReopening
+          ? false
+          : { scale: 0.5, opacity: 0 }
+      }
+      animate={{ scale: 1, opacity: 1 }}
       exit={{
-        scale: 0.8,
         opacity: 0,
+        filter: "blur(4px)",
       }}
       transition={{
-        duration: 0.28,
+        duration: 0.25,
         ease: [0.34, 1.56, 0.64, 1],
       }}
       layout
@@ -276,6 +379,8 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
         width: "100%",
         height: "100%",
         position: "relative",
+        // Hidden (but laid out, so we can measure it) while the reverse genie plays.
+        visibility: isReopening ? "hidden" : "visible",
       }}
     >
       {/* Title bar */}
