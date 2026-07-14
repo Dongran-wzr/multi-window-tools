@@ -15,6 +15,11 @@ const zh: Record<string, string> = {
 
   // Settings modal
   "settings.title": "设置",
+  "settings.search": "搜索设置项...",
+  "settings.apply": "应用",
+  "settings.ok": "确定",
+  "settings.cancel": "取消",
+  "settings.appearance": "外观",
   "settings.theme": "主题",
   "settings.theme.dark": "深色",
   "settings.theme.light": "浅色",
@@ -30,6 +35,8 @@ const zh: Record<string, string> = {
 
   // Advanced settings
   "settings.advanced": "高级选项",
+  "settings.advanced.background": "自定义背景",
+  "settings.advanced.layout": "窗口布局",
   "settings.advanced.background.title": "自定义背景",
   "settings.advanced.background.image": "背景图片",
   "settings.advanced.background.image.choose": "选择图片",
@@ -92,6 +99,11 @@ const en: Record<string, string> = {
 
   // Settings modal
   "settings.title": "Settings",
+  "settings.search": "Search settings...",
+  "settings.apply": "Apply",
+  "settings.ok": "OK",
+  "settings.cancel": "Cancel",
+  "settings.appearance": "Appearance",
   "settings.theme": "Theme",
   "settings.theme.dark": "Dark",
   "settings.theme.light": "Light",
@@ -107,6 +119,8 @@ const en: Record<string, string> = {
 
   // Advanced settings
   "settings.advanced": "Advanced",
+  "settings.advanced.background": "Custom Background",
+  "settings.advanced.layout": "Window Layout",
   "settings.advanced.background.title": "Custom Background",
   "settings.advanced.background.image": "Background Image",
   "settings.advanced.background.image.choose": "Choose Image",
