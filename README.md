@@ -8,26 +8,30 @@ AI Coding 提效工具 —— 基于命令行的多窗口终端模拟器，单�
 
 ### 多任务终端并行
 <p align="center">
-  <img src="images/demo/1.png" alt="黑色模式"  width="80%"/>
-</p>
-<p align="center">
-  <img src="images/demo/2.png" alt="白色模式"  width="80%"/>
+  <img src="images/demo/1.png" alt="黑色模式"  width="45%"/>
+  <img src="images/demo/2.png" alt="白色模式"  width="45%"/>
 </p>
 
 ### 自定义路径
 <p align="center">
-  <img src="images/demo/6.png" alt="黑色模式"  width="80%"/>
+  <img src="images/demo/6.png" alt="黑色模式"  width="50%"/>
 </p>
 
 ### 自由拖拽
 <p align="center">
-  <img src="images/demo/5.png" alt="白色模式"  width="80%"/>
+  <img src="images/demo/5.png" alt="白色模式"  width="50%"/>
 </p>
+
+### 可变窗口
+  <p align="center">
+    <img src="images/demo/7.png" alt="支持双语切换" width="40%" />
+  <img src="images/demo/8.png" alt="自定义主题" width="40%"/>
+  </p>
 
 ### 高度自定义化
   <p align="center">
-    <img src="images/demo/3.png" alt="支持双语切换" width="40%" />
-  <img src="images/demo/4.png" alt="自定义主题" width="40%"/>
+    <img src="images/demo/3.png" alt="支持双语切换" width="30%" />
+  <img src="images/demo/4.png" alt="自定义主题" width="30%"/>
   </p>
 
 
