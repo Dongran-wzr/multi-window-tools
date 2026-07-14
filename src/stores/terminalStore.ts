@@ -48,12 +48,98 @@ export interface TerminalInfo {
   id: string;
   name: string;
   pid?: number;
+  cwd?: string; // working directory when the terminal was created
   gridSlot: number; // 0-8 for 3x3 grid, -1 if minimized
   status: "running" | "idle" | "exited";
   lastOutputTime: number;
   cols: number;
   rows: number;
   isMaximized: boolean;
+}
+
+/** A frequently/recently used directory entry */
+export interface RecentDirectory {
+  path: string;
+  count: number;
+  lastUsedAt: number; // timestamp
+}
+
+const RECENT_DIRS_STORAGE_KEY = "multi-window-terminal-recent-dirs";
+const MAX_RECENT_DIRS = 10;
+
+/** Check if localStorage is available */
+function hasLocalStorage(): boolean {
+  try {
+    return typeof localStorage !== "undefined" && localStorage !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Load recent directories from localStorage */
+function loadRecentDirs(): RecentDirectory[] {
+  if (!hasLocalStorage()) return [];
+  try {
+    const raw = localStorage.getItem(RECENT_DIRS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (d: unknown) =>
+            d && typeof d === "object" &&
+            typeof (d as RecentDirectory).path === "string" &&
+            typeof (d as RecentDirectory).count === "number" &&
+            typeof (d as RecentDirectory).lastUsedAt === "number"
+        );
+      }
+    }
+  } catch {
+    // ignore corrupted data
+  }
+  return [];
+}
+
+/** Save recent directories to localStorage */
+function saveRecentDirs(dirs: RecentDirectory[]): void {
+  if (!hasLocalStorage()) return;
+  try {
+    localStorage.setItem(RECENT_DIRS_STORAGE_KEY, JSON.stringify(dirs));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+/** Record a directory usage: increment count & update timestamp, trim to max */
+function recordDirUsage(
+  dirs: RecentDirectory[],
+  path: string
+): RecentDirectory[] {
+  const cleaned = path.trim().replace(/[/\\]+$/, "").replace(/\\/g, "/");
+  if (!cleaned) return dirs;
+
+  const existing = dirs.find(
+    (d) => d.path.replace(/\\/g, "/") === cleaned
+  );
+  let updated: RecentDirectory[];
+  if (existing) {
+    updated = dirs.map((d) =>
+      d.path.replace(/\\/g, "/") === cleaned
+        ? { ...d, count: d.count + 1, lastUsedAt: Date.now() }
+        : d
+    );
+  } else {
+    updated = [
+      ...dirs,
+      { path: cleaned, count: 1, lastUsedAt: Date.now() },
+    ];
+  }
+
+  // Sort by frequency desc, then recency desc, trim to max
+  updated.sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return b.lastUsedAt - a.lastUsedAt;
+  });
+  return updated.slice(0, MAX_RECENT_DIRS);
 }
 
 export type ThemeMode = "dark" | "light" | "system";
@@ -116,6 +202,11 @@ interface TerminalStore {
   getTerminalBySlot: (slot: number) => TerminalInfo | undefined;
   getNextAvailableSlot: () => number;
   getActiveTerminal: () => TerminalInfo | undefined;
+
+  // Recent directories
+  recentDirectories: RecentDirectory[];
+  recordDirectoryUsage: (path: string) => void;
+  getRecentDirectories: (excludePaths?: string[]) => RecentDirectory[];
 }
 
 const MAX_TERMINALS = 9;
@@ -165,6 +256,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   backgroundEnabled: true,
   flyAnimation: null,
   reopeningId: null,
+  recentDirectories: loadRecentDirs(),
 
   addTerminal: (terminal) =>
     set((state) => ({
@@ -286,6 +378,24 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   setFlyAnimation: (anim) => set({ flyAnimation: anim }),
 
   setReopeningId: (id) => set({ reopeningId: id }),
+
+  recordDirectoryUsage: (path) =>
+    set((state) => {
+      const updated = recordDirUsage(state.recentDirectories, path);
+      saveRecentDirs(updated);
+      return { recentDirectories: updated };
+    }),
+
+  getRecentDirectories: (excludePaths) => {
+    const { recentDirectories } = get();
+    if (!excludePaths || excludePaths.length === 0) return recentDirectories;
+    const excludeSet = new Set(
+      excludePaths.map((p) => p.trim().replace(/\\/g, "/").replace(/[/\\]+$/, ""))
+    );
+    return recentDirectories.filter(
+      (d) => !excludeSet.has(d.path.replace(/\\/g, "/"))
+    );
+  },
 
   getTerminalBySlot: (slot) => {
     return get().terminals.find((t) => t.gridSlot === slot);

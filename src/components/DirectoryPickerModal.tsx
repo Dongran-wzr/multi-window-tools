@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Folder, FolderOpen, Home, Monitor, FileText, Download, FolderSearch } from "lucide-react";
+import { X, Folder, FolderOpen, Home, Monitor, FileText, Download, FolderSearch, Clock } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { useI18n } from "../i18n/translations";
+import { useTerminalStore } from "../stores/terminalStore";
 
 interface CommonDirs {
   home: string;
@@ -104,6 +105,19 @@ const DirectoryPickerModal: React.FC<DirectoryPickerModalProps> = ({
       ]
     : [];
 
+  // Recent directories (exclude the 4 common dirs to avoid duplicates)
+  const recentDirectories = useTerminalStore((s) => s.recentDirectories);
+  const recentDirs = useMemo(() => {
+    if (!commonDirs || recentDirectories.length === 0) return [];
+    const excludeSet = new Set(
+      [commonDirs.home, commonDirs.desktop, commonDirs.documents, commonDirs.downloads]
+        .map((p) => p.trim().replace(/\\/g, "/").replace(/[/\\]+$/, ""))
+    );
+    return recentDirectories
+      .filter((d) => !excludeSet.has(d.path.replace(/\\/g, "/")))
+      .slice(0, 4);
+  }, [recentDirectories, commonDirs]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -188,6 +202,101 @@ const DirectoryPickerModal: React.FC<DirectoryPickerModalProps> = ({
                   <X size={18} />
                 </motion.button>
               </div>
+
+              {/* Recent directories */}
+              {recentDirs.length > 0 && (
+                <div>
+                  <h3
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      color: "var(--text-secondary)",
+                      marginBottom: "12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Clock size={14} />
+                    {t("dialog.recentDirs")}
+                  </h3>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: "8px",
+                    }}
+                  >
+                    {recentDirs.map((dir) => (
+                      <motion.button
+                        key={dir.path}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => handleQuickSelect(dir.path)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "14px 12px",
+                          borderRadius: "10px",
+                          border:
+                            selectedPath === dir.path
+                              ? "2px solid var(--accent)"
+                              : "2px solid var(--card-border)",
+                          background:
+                            selectedPath === dir.path
+                              ? "var(--accent-dim)"
+                              : "var(--bg-tertiary)",
+                          color:
+                            selectedPath === dir.path
+                              ? "var(--accent)"
+                              : "var(--text-secondary)",
+                          cursor: "pointer",
+                          transition: "all var(--transition-fast)",
+                        }}
+                      >
+                        <Folder size={16} />
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: "2px",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "11px",
+                              fontWeight: 500,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: "140px",
+                            }}
+                          >
+                            {dir.path.split("/").pop() || dir.path.split("\\").pop() || dir.path}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              color: "var(--text-muted)",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: "140px",
+                              direction: "rtl",
+                              textAlign: "left",
+                            }}
+                          >
+                            {dir.path}
+                          </span>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quick select directories */}
               <div>

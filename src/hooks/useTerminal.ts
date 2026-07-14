@@ -8,7 +8,7 @@ export interface CreateTerminalParams {
 }
 
 export function useTerminal() {
-  const { addTerminal, removeTerminal, updateTerminalStatus, updateTerminalName, getNextAvailableSlot } = useTerminalStore();
+  const { addTerminal, removeTerminal, updateTerminalStatus, updateTerminalName, getNextAvailableSlot, recordDirectoryUsage } = useTerminalStore();
 
   const createTerminal = useCallback(
     async (params?: CreateTerminalParams): Promise<TerminalInfo | null> => {
@@ -43,6 +43,7 @@ export function useTerminal() {
           id: result.terminal_id,
           name: `Terminal ${terminalNum}`,
           pid: result.pid,
+          cwd: params?.cwd || undefined,
           gridSlot: slot,
           status: "running",
           lastOutputTime: Date.now(),
@@ -52,6 +53,11 @@ export function useTerminal() {
         };
 
         addTerminal(terminal);
+
+        // Record directory usage for "recent directories" feature
+        if (params?.cwd) {
+          recordDirectoryUsage(params.cwd);
+        }
 
         return terminal;
       } catch (error) {
